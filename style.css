@@ -1,0 +1,65 @@
+.c_background {
+	background-color: #03080E;
+}
+
+.c_menuBackdrop {
+	background-color: #151F29;
+}
+
+.c_menuButton {
+	background-color: #43485B;
+}
+
+.c_text {
+	color: #E8E9EC;
+}
+
+.f_headerText {
+	color: #E8E9EC;
+	font-family: "Gill Sans", sans-serif;
+	font-size: 36px;
+}
+
+.f_standardText {
+	color: #E8E9EC;
+	font-family: "Gill Sans", sans-serif;
+	font-size: 18px;
+}
+
+.sideMenu {
+	font-family: "Gill Sans", sans-serif;
+	font-size: 24px;
+	color: #E8E9EC;
+	border-radius: 5px;
+	padding: 2px;
+	padding-left: 10px;
+	margin: 4px;
+	transition: background-color 0.2s;
+}
+
+.sideMenu:hover {
+	color: #E8E9EC;
+	background-color: #43485B;
+}
+
+.headerRow {
+	color: #E8E9EC;
+	font-family: "Gill Sans", sans-serif;
+	font-size: 54px;
+	padding-left: 10px;
+}
+
+.textRow {
+	color: #E8E9EC;
+	font-family: "Gill Sans", sans-serif;
+	font-size: 18px;
+	padding-left: 10px;
+}
+
+.player {
+	background-color: #151F29;
+	color: #E8E9EC;
+	position: fixed; 
+	bottom: 0;
+	width: 100%;
+}
