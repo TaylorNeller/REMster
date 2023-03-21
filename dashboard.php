@@ -4,6 +4,8 @@ include_once("db_connect.php");
 include("bootstrap.php");
 include("userutil.php");
 
+// test comment
+
 session_start();
 $op = $_GET["op"];
 switch($op) {
