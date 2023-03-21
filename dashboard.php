@@ -8,6 +8,8 @@ include("userutil.php");
 
 // another test comment
 
+// another one
+
 session_start();
 $op = $_GET["op"];
 switch($op) {
