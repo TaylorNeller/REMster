@@ -6,6 +6,8 @@ include("userutil.php");
 
 // test comment
 
+// another test comment
+
 session_start();
 $op = $_GET["op"];
 switch($op) {
