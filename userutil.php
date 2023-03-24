@@ -250,7 +250,7 @@ function validateUser($db, $uname, $pass) {
 	print("validation");
 	$loginQuery = 	"SELECT * " . 
 					"FROM users " .
-					"WHERE uname=$uname AND pass=$pass";
+					"WHERE uname='$uname' AND pass='$pass'";
 	print($loginQuery);
 	$loginResult = $db->query($loginQuery);
 	print_r($loginResult);
