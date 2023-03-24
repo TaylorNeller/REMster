@@ -21,6 +21,7 @@ function showSongsList($songsData) {
 	}
 }
 function viewCollection($db, $collectionID, $userID) {
+	print("viewColl");
 	$albumTest = 	"SELECT * " . 
 					"FROM album " .
 					"WHERE aid=$collectionID";
