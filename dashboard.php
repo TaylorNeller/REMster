@@ -7,6 +7,8 @@ include("userutil.php");
 
 session_start();
 // unset($_SESSION["uname"]);
+print("username: ");
+print($_SESSION("uname"));
 $op = $_GET["op"];
 switch($op) {
 	case "login":
