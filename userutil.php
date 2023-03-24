@@ -1,6 +1,4 @@
 <?php
-include_once("db_connect.php");
-
 // INTERNAL ONLY function which takes array of song info
 // prints single song in the context of a list of songs
 function showSongsList($songsData) {
@@ -21,7 +19,6 @@ function showSongsList($songsData) {
 	}
 }
 function viewCollection($db, $collectionID, $userID) {
-	print("viewColl");
 	$albumTest = 	"SELECT * " . 
 					"FROM album " .
 					"WHERE aid=$collectionID";
@@ -37,155 +34,124 @@ function viewCollection($db, $collectionID, $userID) {
 function viewPlaylist($db, $pid, $userID) {
 	//todo
 }
+
+function getAlbum($db, $albumID) {
+	$albumQuery = 	"SELECT * " . 
+						"FROM album " .
+						"WHERE aid=$albumID";
+	$albumResult = $db->query($albumQuery);
+	if ($albumResult != FALSE) {
+		$Target = $albumResult->fetch();
+		$albumData = [];
+		$albumData["name"] = $Target["aname"];
+		$albumData["release_date"] = $Target["release_date"];
+		$albumData["uploader"] = $Target["uploader"];
+	}
+	return $albumData;
+}
+
 // returns the artists of a song or album given the database, the song or album ID, and the type of media.
 // "S" if song, "A" if album.
 function getArtists($db, $mediaID, $mediaType) {
 	switch($mediaType) {
 		case "A":
 			$artistQuery = "SELECT artid, artname " . 
-					"FROM album_artist NATURAL JOIN artist
-					WHERE aid=$mediaID";
+					"FROM album_artist NATURAL JOIN artist " .
+					"WHERE aid=$mediaID";
 			break;
-		case "S:":
+		case "S":
 			$artistQuery = "SELECT artid, artname " . 
-					"FROM song NATURAL JOIN artist
-					WHERE sid=$mediaID";
+					"FROM song_artist NATURAL JOIN artist " .
+					"WHERE sid=$mediaID";
 			break;
 	}
 	$artistResult = $db->query($artistQuery);
-	$artids = [];
-	$artnames = [];
-	$i = 0;
+	$artists = [];
+	//todo add error handling
 	while ($artistInfo = $artistResult->fetch()) {
-		$artids[$i] = $artistInfo["artid"];
-		$artnames[$i++] = $artistInfo["artname"];
+		$artists[$artistInfo["artid"]] = $artistInfo["artname"];
 	}
-	$artists = [$artids, $artnames];
 	return $artists;
 }
 
+// returns the songs of a playlist or album given the database, the playlist or album ID, and the type of media.
+// "P" if playlist, "A" if album.
+function getSongs($db, $mediaID, $mediaType) {
+	switch($mediaType) {
+		case "A":
+			$songQuery = 	"SELECT sid, sname, duration, release_date " .
+							"FROM song_album NATURAL JOIN song " .
+							"WHERE aid=$mediaID";
+			break;
+		case "P":
+			$songQuery = 	"SELECT sid, sname, duration, release_date " .
+							"FROM song_playlist NATURAL JOIN song " .
+							"WHERE aid=$mediaID";
+			break;
+	}
+	$songResult = $db->query($songQuery);
+	$songs = [];
+	//todo add error handling
+	while($currSongRes = $songResult->fetch()) {
+		$currSong = [];
+		$currSong["name"] = $currSongRes["sname"];
+		$currSong["duration"] = $currSongRes["duration"];
+		$currSong["release_date"] = $currSongRes["release_date"];
+		$currSID = $currSongRes["sid"];
+		$currSong["artists"] = getArtists($db, $currSID, "S");
+		$currSong["sid"] = $currSID;
+		$songs[$currSID] = $currSong;
+	}
+	return $songs;
+}
 
+//handles front-end display of an album.
 function viewAlbum($db, $albumID, $userID) {
-	// query to fetch collection from given id
-	$albumQuery = 	"SELECT * " . 
-						"FROM album " .
-						"WHERE pid=$albumID";
-	$albumResult = $db->query($albumQuery);
+	// retrieve album data (metadata, artists, songs)
+	$albumData = getAlbum($db, $albumID);
+	$albumArtists = getArtists($db, $albumID, "A");
+	$albumSongs = getSongs($db, $albumID, "A");
+	//todo: implement error handling in those methods
 
+	print("<DIV class='container' style='height: 100vh; " . 
+		"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
 
-	$albumArtist = getArtists($db, $albumID, "A");
-	print_r($albumArtist);
+		print("<DIV class='row'>");
 
-	// // query to fetch IDs of songs in current collection
-	// $songInQuery = 	"SELECT * " .
-	// 				"FROM song_album " .
-	// 				"WHERE aid=$albumID";
+			print("<DIV class='col-md-3'>\n");
+				$srcLink = "art/$albumID.png";
+				$alttext = $albumData["name"];
+				print("<img src=$srcLink alt='$alttext cover' " . 
+					"height='100%', width='100%'>");
+			print("</DIV>");
 
-	// $songInResult = $db->query($songInQuery);
+			print("<DIV class='col-md-9 my-auto'>\n");
 
-	// $artistQuery = 	"SELECT artid, artname " . 
-	// 				"FROM album_artist NATURAL JOIN artist
-	// 				WHERE aid=$albumID";
+				print("<DIV class='row textRow'>\n");
+					print("ALBUM");
+				print("</DIV>\n");
 
-	// $artistResult = $db->query($artistQuery);
+				print("<DIV class='row headerRow'>\n");
+					print("<b>" . $albumData["name"] . "</b>");
+				print("</DIV>\n");
 
-	// if ($albumResult == FALSE || $songInResult == FALSE) {
-	// 	print("INTERNAL ERROR: could not find collection with id $albumID");
-	// 	print("QUERY: $albumQuery");
-	// 	// temporary. Make redirect to home
-	// }
+	 			// other album info
+				print("<DIV class='row textRow'>\n");
+					// eventually: make this a link to their artist page
+					// print($artist . "  |  ");
+					// print($releaseDate . "  |  ");
 
-	// else {
-	// 	// gather collection information
-	// 	$album = $albumResult->fetch();
-	// 	$albumName = $album["aname"];
-	// 	$uploader = $album["uploader"];
-	// 	$releaseDate = $album["release_date"];
-
-	// 	$artids = [];
-	// 	$artnames = [];
-	// 	$i = 0;
-	// 	while ($artistInfo = $artistResult->fetch()) {
-	// 		$artids[$i] = $artistInfo["artid"];
-	// 		$artnames[$i++] = $artistInfo["artname"];
-	// 	}
-
-	// 	// gather songIDs 
-	// 	$songIDs = array();
-	// 	while ($song = $songInResult->fetch()) {
-	// 		array_push($songIDs, $song["sid"]);
-	// 	}
-	// }
-
-	// // query to fetch the individual songs based on IDs gathered earlier
-	// $songIDsString = "(" . implode(", ", $songIDs) . ")";
-	// $songsQuery = 	"SELECT * " .
-	// 				"FROM song " .
-	// 				"WHERE sid IN $songIDsString";
-
-	// $songsResult = $db->query($songsQuery);
-
-	// if ($songsResult == FALSE) {
-	// 	print("INTERNAL ERROR: could not fetch songs from $albumID");
-	// 	print("QUERY: $songsQuery");
-	// 	// temporary. Make redirect to home
-	// }
-
-	// // create array which maps songID to necessary song data
-	// else {
-	// 	$songs = array();
-	// 	while ($currSongData = $songsResult->fetch()) {
-	// 		$currSong = array();
-	// 		$currSong["name"] = $currSongData["sname"];
-	// 		$currSong["artist"] = $currSongData["artist"];
-	// 		$currSong["releaseDate"] = $currSongData["release_date"];
-	// 		$currSong["duration"] = $currSongData["duration"];
-
-	// 		$songs[$currSongData["sid"]] = $currSong; 
-	// 	}
-	// }
-	// print("<DIV class='container' style='height: 100vh; " . 
-	// 	"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
-	// 	print("<DIV class='row'>");
-	// 		print("<DIV class='col-md-3'>\n");
-	// 			$srcLink = "art/$collectionID.png";
-	// 			print("<img src='$srcLink' alt='$collName cover' " . 
-	// 				"height='100%', width='100%'>");
-	// 		print("</DIV>");
-
-	// 		print("<DIV class='col-md-9 my-auto'>\n");
-	// 			// album vs. playlist header
-	// 			print("<DIV class='row textRow'>\n");
-	// 			if ($isAlbum == "T") {
-	// 				print("ALBUM");
-	// 			}
-	// 			else {
-	// 				print("PLAYLIST");
-	// 			}
-	// 			print("</DIV>\n");
-
-	// 			// album name
-	// 			print("<DIV class='row headerRow'>\n");
-	// 				print("<b>" . $collName . "</b>");
-	// 			print("</DIV>\n");
-
-	// 			// other album info
-	// 			print("<DIV class='row textRow'>\n");
-	// 				// eventually: make this a link to their artist page
-	// 				print($artist . "  |  ");
-	// 				print($releaseDate . "  |  ");
-
-	// 				// derive song count and album length
-	// 				$numSongs = count($songs);
-	// 				$runtime = 0;
-	// 				foreach ($songs as $currSong) {
-	// 					$runtime += $currSong["duration"];
-	// 				}
-	// 				print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
-	// 					($runtime % 60) . " sec");
-	// 			print("</DIV>\n");
-	// 		print("</DIV>\n");
-	// 	print("</DIV>\n");
+					// derive song count and album length
+					$numSongs = count($albumSongs);
+					$runtime = 0;
+					// foreach ($songs as $currSong) {
+					// 	$runtime += $currSong["duration"];
+					// }
+					// print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
+					// 	($runtime % 60) . " sec");
+				print("</DIV>\n");
+			print("</DIV>\n");
+		print("</DIV>\n");
 
 	// 	// thought: use javascript to handle liked songs
 	// 	print("<DIV class='row'>\n");
@@ -207,7 +173,7 @@ function viewAlbum($db, $albumID, $userID) {
 	// 		print("uploaded by $uploader");
 	// 	print("</p></DIV>");
 
-	// print("</DIV>\n");
+	print("</DIV>\n");
 }
 
 function showLandingPage() {
@@ -252,13 +218,10 @@ function showLandingPage() {
 function validateUser($db, $uname, $pass) {
 	// returns boolean
 	// add encryption!!!
-	print("validation");
 	$loginQuery = 	"SELECT * " . 
-					"FROM users " .
+					"FROM users ";
 					"WHERE uname='$uname' AND pass='$pass'";
-	print($loginQuery);
 	$result = $db->query($loginQuery);
-	print($result);
 	return $result;
 }
 
