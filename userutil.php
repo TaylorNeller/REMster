@@ -25,6 +25,7 @@ function viewCollection($db, $collectionID, $userID) {
 					"FROM album " .
 					"WHERE aid=$collectionID";
 	$albumTestResult = $db->query($albumTest);
+	print("after album result");
 	if ($albumTestResult != FALSE) {
 		viewAlbum($db, $collectionID, $userID);
 	}
