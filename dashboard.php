@@ -16,6 +16,7 @@ switch($op) {
 	case "login":
 		if (validateUser($db, $_POST["uname"], $_POST["pass"])) {
 			$_SESSION["uname"] = $_POST["uname"]; 
+			header("refresh:0;url=dashboard.php");
 		}
 		else {
 			header("refresh:2;url=dashboard.php");
