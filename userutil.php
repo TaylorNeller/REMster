@@ -247,6 +247,7 @@ function showLandingPage() {
 function validateUser($db, $uname, $pass) {
 	// returns boolean
 	// add encryption!!!
+	print("validation");
 	$loginQuery = 	"SELECT * " . 
 					"FROM users " .
 					"WHERE uname=$uname AND pass=$pass";
