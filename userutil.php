@@ -7,13 +7,12 @@ function showSongsList($songsData) {
 	foreach($songsData as $currSong) {
 		print("<TR>\n");
 		$currName = $currSong["name"];
-		$currArtist = $currSong["artist"];
+		$currArtist = $currSong["artists"];
 		$currDuration = $currSong["duration"];
 		print("<TD>$trackNum</TD>\n");
-		print("<TD>$currName<br>$currArtist</TD>\n");
+		print("<TD>$currName<br>" . implode(", ", $currArtist). "</TD>\n");
 		print("<TD align='right'></TD>\n");
-		print("<TD>" . intdiv($currDuration, 60) . ":" . 
-			$currDuration % 60 . "</TD>\n");
+		print("<TD>" . gmdate("i:s", $currDuration) . "</TD>\n");
 		print("</TR>\n");
 		$trackNum++;
 	}
@@ -138,40 +137,41 @@ function viewAlbum($db, $albumID, $userID) {
 	 			// other album info
 				print("<DIV class='row textRow'>\n");
 					// eventually: make this a link to their artist page
-					// print($artist . "  |  ");
-					// print($releaseDate . "  |  ");
+					print(implode(", ", $albumArtists) . "  |  ");
+					print($albumData["release_date"] . "  |  ");
 
 					// derive song count and album length
 					$numSongs = count($albumSongs);
 					$runtime = 0;
-					// foreach ($songs as $currSong) {
-					// 	$runtime += $currSong["duration"];
-					// }
-					// print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
-					// 	($runtime % 60) . " sec");
+					foreach ($albumSongs as $currSong) {
+						$runtime += $currSong["duration"];
+					}
+					print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
+						($runtime % 60) . " sec");
 				print("</DIV>\n");
+
 			print("</DIV>\n");
 		print("</DIV>\n");
 
 	// 	// thought: use javascript to handle liked songs
-	// 	print("<DIV class='row'>\n");
-	// 	$tableHeader = "<TABLE class='f_standardText' " . 
-	// 		"width='100%' cellpadding='5' style='margin-top: 10px'>" .
-	// 		"<TR>\n" .
-	// 		"<TH>#</TH>\n" .
-	// 		"<TH>Title</TH>\n" .
-	// 		"<TH>Liked</TH>\n" .
-	// 		"<TH>Length</TH>\n" .
-	// 		"</TR>\n";
-	// 	print($tableHeader);
+		print("<DIV class='row'>\n");
+		$tableHeader = "<TABLE class='f_standardText' " . 
+			"width='100%' cellpadding='5' style='margin-top: 10px'>" .
+			"<TR>\n" .
+			"<TH>#</TH>\n" .
+			"<TH>Title</TH>\n" .
+			"<TH>Liked</TH>\n" .
+			"<TH>Length</TH>\n" .
+			"</TR>\n";
+		print($tableHeader);
 
 	// 	// shows songs in collection
-	// 	showSongsList($songs);
-	// 	print("</TABLE>\n</DIV>\n");
+		showSongsList($albumSongs);
+		print("</TABLE>\n</DIV>\n");
 
-	// 	print("<DIV class='row c_text' style='height: 40px; margin-top: 20px'><p>");
-	// 		print("uploaded by $uploader");
-	// 	print("</p></DIV>");
+		print("<DIV class='row c_text' style='height: 40px; margin-top: 20px'><p>");
+			print("uploaded by $uploader");
+		print("</p></DIV>");
 
 	print("</DIV>\n");
 }
