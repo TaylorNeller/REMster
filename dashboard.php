@@ -4,13 +4,9 @@ include_once("db_connect.php");
 include("bootstrap.php");
 include("userutil.php");
 
-// test comment
-
-// another test comment
-
-// another one
 
 session_start();
+unset($_SESSION["uname"]);
 $op = $_GET["op"];
 switch($op) {
 	case "login":
