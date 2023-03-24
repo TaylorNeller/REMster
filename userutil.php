@@ -253,7 +253,7 @@ function validateUser($db, $uname, $pass) {
 					"WHERE uname='$uname' AND pass='$pass'";
 	print($loginQuery);
 	$loginResult = $db->query($loginQuery);
-	print_r($loginResult);
+	print($loginResult);
 	return $loginResult;
 }
 
