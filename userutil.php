@@ -33,6 +33,10 @@ function viewCollection($db, $collectionID, $userID) {
 		viewPlaylist($db, $collectionID, $userID);
 	}
 }
+
+function viewPlaylist($db, $pid, $userID) {
+	//todo
+}
 // returns the artists of a song or album given the database, the song or album ID, and the type of media.
 // "S" if song, "A" if album.
 function getArtists($db, $mediaID, $mediaType) {
@@ -253,9 +257,9 @@ function validateUser($db, $uname, $pass) {
 					"FROM users " .
 					"WHERE uname='$uname' AND pass='$pass'";
 	print($loginQuery);
-	$loginResult = $db->query($loginQuery);
-	print($loginResult);
-	return $loginResult;
+	$result = $db->query($loginQuery);
+	print($result);
+	return $result;
 }
 
 // unfinished, not fully working
