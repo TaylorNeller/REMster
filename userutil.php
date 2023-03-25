@@ -165,20 +165,21 @@ function viewAlbum($db, $albumID, $userID) {
 			"</TR>\n";
 		print($tableHeader);
 
-	// 	// shows songs in collection
+	 	// shows songs in collection
 		showSongsList($albumSongs);
 		print("</TABLE>\n</DIV>\n");
 
 		print("<DIV class='row c_text' style='height: 40px; margin-top: 20px'><p>");
-			print("uploaded by $uploader");
+			print("uploaded by " . $albumData["uploader"]);
 		print("</p></DIV>");
 
 	print("</DIV>\n");
 }
 
 function showLandingPage() {
+	// removed overflow to try to prevent scrollability
 	print("<DIV class='container' style='height: 100vh; " . 
-		"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
+		"margin-left: 20px; margin-top: 20px'>\n");
 		print("<DIV class='f_headerText' style='text-align: center; " . 
 			"width: 100%; margin-top: 50px'>\n");
 		print("<b>Welcome to REMster.<br>All music, no hassle.</b>\n");
