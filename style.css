@@ -63,3 +63,10 @@
 	bottom: 0;
 	width: 100%;
 }
+
+.loginTextBox {
+	background-color: #151F29;
+	color: #E8E9EC;
+	margin-top: 20px;
+	border-radius: 5px;
+}

@@ -169,7 +169,7 @@ function viewAlbum($db, $albumID, $userID) {
 		showSongsList($albumSongs);
 		print("</TABLE>\n</DIV>\n");
 
-		print("<DIV class='row c_text' style='height: 40px; margin-top: 20px'><p>");
+		print("<DIV class='row c_text' style='height: 100px; margin-top: 20px'><p>");
 			print("uploaded by " . $albumData["uploader"]);
 		print("</p></DIV>");
 
@@ -190,9 +190,9 @@ function showLandingPage() {
 			print("<DIV class='col-md-6'>\n");
 				print("<p>Log in with your account...</p>");
 				print("<FORM name = 'fmLogin' method='POST' action='?op=login'>\n");
-				print("<INPUT type='text' name='uname' size='8' placeholder='username' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='uname' size='8' placeholder='username' />\n");
 				print("<br>");
-				print("<INPUT type='text' name='pass' size='8' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass' size='8' placeholder='password' />\n");
 				print("<br>");
 			 	print("<INPUT type='submit' value='login' />\n");
 				print("</FORM>\n");
@@ -201,13 +201,13 @@ function showLandingPage() {
 			print("<DIV class='col-md-6'>\n");
 				print("<p>Or create a new account.</p>");
 				print("<FORM name = 'fmRegister' method='POST' action='?op=register'>\n");
-				print("<INPUT type='text' name='uname' size='8' placeholder='username' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='uname' size='8' placeholder='username' />\n");
 				print("<br>");
-				print("<INPUT type='text' name='email' size='8' placeholder='email' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='email' size='8' placeholder='email' />\n");
 				print("<br>");
-				print("<INPUT type='text' name='pass1' size='8' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass1' size='8' placeholder='password' />\n");
 				print("<br>");
-				print("<INPUT type='text' name='pass2' size='8' placeholder='re-enter' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass2' size='8' placeholder='re-enter' />\n");
 				print("<br>");
 			 	print("<INPUT type='submit' value='register' />\n");
 				print("</FORM>\n");
