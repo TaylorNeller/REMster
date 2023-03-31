@@ -30,7 +30,7 @@ function viewCollection($db, $collectionID, $userID) {
 	}
 }
 
-function viewPlaylist($db, $pid, $userID) {
+function viewPlaylist($db, $playlistID, $userID) {
 	//todo
 }
 
@@ -51,7 +51,7 @@ function getAlbum($db, $albumID) {
 
 // returns the artists of a song or album given the database, the song or album ID, and the type of media.
 // "S" if song, "A" if album.
-function getArtists($db, $mediaID, $mediaType) {
+function getArtistsFromMedia($db, $mediaID, $mediaType) {
 	switch($mediaType) {
 		case "A":
 			$artistQuery = "SELECT artid, artname " . 
@@ -97,7 +97,7 @@ function getSongs($db, $mediaID, $mediaType) {
 		$currSong["duration"] = $currSongRes["duration"];
 		$currSong["release_date"] = $currSongRes["release_date"];
 		$currSID = $currSongRes["sid"];
-		$currSong["artists"] = getArtists($db, $currSID, "S");
+		$currSong["artists"] = getArtistsFromMedia($db, $currSID, "S");
 		$currSong["sid"] = $currSID;
 		$songs[$currSID] = $currSong;
 	}
@@ -108,7 +108,7 @@ function getSongs($db, $mediaID, $mediaType) {
 function viewAlbum($db, $albumID, $userID) {
 	// retrieve album data (metadata, artists, songs)
 	$albumData = getAlbum($db, $albumID);
-	$albumArtists = getArtists($db, $albumID, "A");
+	$albumArtists = getArtistsFromMedia($db, $albumID, "A");
 	$albumSongs = getSongs($db, $albumID, "A");
 	//todo: implement error handling in those methods
 
@@ -176,6 +176,75 @@ function viewAlbum($db, $albumID, $userID) {
 	print("</DIV>\n");
 }
 
+// creates and returns a collection "tile": a clickable object linking to the album/playlist page
+function showCollectionImage($db, $collectionID) {
+	$albumTest = 	"SELECT * " . 
+					"FROM album " .
+					"WHERE aid=$collectionID";
+	$albumTestResult = $db->query($albumTest);
+	if ($albumTestResult != FALSE) {
+		showAlbumImage($db, $collectionID);
+	}
+	else {
+		showPlaylistImage($db, $collectionID);
+	}
+}
+
+function showAlbumImage($db, $albumID) {
+	$albumData = getAlbum($db, $albumID);
+
+
+
+
+	$srcLink = "art/$albumID.png";
+	$alttext = $albumData["name"];
+	print("<a href='?op=album&aid=$albumID'>");
+		print("<DIV class='tile'>\n");
+			print("<img src=$srcLink alt='$alttext cover' " . 
+				"height='100%', width='100%'>");
+		print("</DIV>\n");
+	print("</a>");
+}
+
+function showPlaylistImage($db, $playlistID) {
+
+}
+
+// returns the artist name and data for all albums created by that artist
+function getArtist($db, $artistID) {
+	print($artistID);
+	$nameQuery = "SELECT artname FROM artist WHERE artid=$artistID";
+	$nameResult = $db->query($nameQuery);
+	if ($nameResult == FALSE) {
+		//add error handling. likely break out to other method
+		print("uh-oh! name result bad");
+	}
+	print($artistName);
+	$artistName = $nameResult->fetch();
+	$workedOnQuery = "SELECT aid FROM album_artist WHERE artid=$artistID";
+	$workedOnResult = $db->query($workedOnQuery);
+	if ($workedOnResult == FALSE) {
+		//add error handling. likely break out to other method
+		print("uh-oh! workedon result bad");
+	}
+	else {
+		$i = 0;
+		$albums = array();
+		while ($currAlbumID = $workedOnResult->fetch()) {
+			$currAlbumData = getAlbum($currAlbumID);
+			print($currAlbumData);
+			$albums[$i++] = $currAlbumData;
+		}
+	}
+	$result = [$artistName, $albums];
+	return $result;
+}
+
+function viewArtist($db, $artistID) {
+	$artistInfo = getArtist($db, $artistID);
+	print_r($artistInfo);
+}
+
 function showLandingPage() {
 	// removed overflow to try to prevent scrollability
 	print("<DIV class='container' style='height: 100vh; " . 
@@ -190,26 +259,26 @@ function showLandingPage() {
 			print("<DIV class='col-md-6'>\n");
 				print("<p>Log in with your account...</p>");
 				print("<FORM name = 'fmLogin' method='POST' action='?op=login'>\n");
-				print("<INPUT class='loginTextBox' type='text' name='uname' size='8' placeholder='username' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='uname' size='12' placeholder='username' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass' size='8' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass' size='12' placeholder='password' />\n");
 				print("<br>");
-			 	print("<INPUT type='submit' value='login' />\n");
+			 	print("<INPUT type='submit' value='login' style='margin-top: 20px'/>\n");
 				print("</FORM>\n");
 			print("</DIV>\n");
 
 			print("<DIV class='col-md-6'>\n");
 				print("<p>Or create a new account.</p>");
 				print("<FORM name = 'fmRegister' method='POST' action='?op=register'>\n");
-				print("<INPUT class='loginTextBox' type='text' name='uname' size='8' placeholder='username' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='uname' size='12' placeholder='username' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='email' size='8' placeholder='email' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='email' size='12' placeholder='email' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass1' size='8' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass1' size='12' placeholder='password' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass2' size='8' placeholder='re-enter' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass2' size='12' placeholder='re-enter' />\n");
 				print("<br>");
-			 	print("<INPUT type='submit' value='register' />\n");
+			 	print("<INPUT type='submit' value='register' style='margin-top: 20px'/>\n");
 				print("</FORM>\n");
 			print("</DIV>\n");
 		print("</DIV>\n");

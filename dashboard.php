@@ -91,7 +91,15 @@ switch($op) {
 			showLandingPage();
 		}
 		else {
-			viewCollection($db, "1", "10");
+			$op = $_GET["op"];
+			switch ($op) {
+				case "login":
+				case "home":
+					viewCollection($db, "1", "10");
+					break;
+				case "search":
+					viewArtist($db, "1");
+			}
 		}
 		?>
 	</DIV>

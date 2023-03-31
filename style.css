@@ -70,3 +70,8 @@
 	margin-top: 20px;
 	border-radius: 5px;
 }
+
+.tile {
+	height: 10%;
+	width: 10%;
+}
