@@ -99,6 +99,13 @@ switch($op) {
 					break;
 				case "search":
 					viewArtist($db, "1");
+					break;
+				case "artist":
+					viewArtist($db, $_GET["artid"]);
+					break;
+				case "album":
+					viewCollection($db, $_GET["aid"], "10");
+					break;
 			}
 		}
 		?>

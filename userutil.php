@@ -137,8 +137,13 @@ function viewAlbum($db, $albumID, $userID) {
 	 			// other album info
 				print("<DIV class='row textRow'>\n");
 					// eventually: make this a link to their artist page
-					print(implode(", ", $albumArtists) . "  |  ");
-					print($albumData["release_date"] . "  |  ");
+					$artistString = "";
+					foreach(array_keys($albumArtists) as $currArtistID) {
+						$artistString = $artistString . "<a href=?op=artist&artid=$currArtistID> ".
+							$albumArtists[$currArtistID] . "</a>, &nbsp;";
+					}
+					print(rtrim($artistString, ", &nbsp;") . "&nbsp;&bull; ");
+					print($albumData["release_date"] . "  &bull;  ");
 
 					// derive song count and album length
 					$numSongs = count($albumSongs);
@@ -190,37 +195,40 @@ function showCollectionImage($db, $collectionID) {
 	}
 }
 
-function showAlbumImage($db, $albumID) {
+function showAlbumImage($db, $albumID, $showArtists) {
 	$albumData = getAlbum($db, $albumID);
-
-
-
-
+	$artistsData = getArtistsFromMedia($db, $albumID, "A");
 	$srcLink = "art/$albumID.png";
-	$alttext = $albumData["name"];
+	$albumName = $albumData["name"];
 	print("<a href='?op=album&aid=$albumID'>");
 		print("<DIV class='tile'>\n");
-			print("<img src=$srcLink alt='$alttext cover' " . 
-				"height='100%', width='100%'>");
+			print("<img src=$srcLink alt='$albumName cover' " . 
+				"style='height:100%; width:100%; object-fit: cover'>");
+			$tileInfo = "<b>$albumName</b> &bull; ". substr($albumData["release_date"], 0, 4) . " <br>";
+			if ($showArtists) {
+				foreach(array_values($artistsData) as $currArtist) {
+					$tileInfo = $tileInfo . $currArtist . "<br>\n";
+				}
+			}
+			print("<p class='textRow' style='text-align: center'>\n$tileInfo</p>\n");
 		print("</DIV>\n");
 	print("</a>");
 }
 
 function showPlaylistImage($db, $playlistID) {
-
+	//todo
 }
 
 // returns the artist name and data for all albums created by that artist
 function getArtist($db, $artistID) {
-	print($artistID);
 	$nameQuery = "SELECT artname FROM artist WHERE artid=$artistID";
 	$nameResult = $db->query($nameQuery);
 	if ($nameResult == FALSE) {
 		//add error handling. likely break out to other method
 		print("uh-oh! name result bad");
 	}
-	print($artistName);
-	$artistName = $nameResult->fetch();
+
+	$artistName = $nameResult->fetch()["artname"];
 	$workedOnQuery = "SELECT aid FROM album_artist WHERE artid=$artistID";
 	$workedOnResult = $db->query($workedOnQuery);
 	if ($workedOnResult == FALSE) {
@@ -230,19 +238,22 @@ function getArtist($db, $artistID) {
 	else {
 		$i = 0;
 		$albums = array();
-		while ($currAlbumID = $workedOnResult->fetch()) {
-			$currAlbumData = getAlbum($currAlbumID);
-			print($currAlbumData);
-			$albums[$i++] = $currAlbumData;
+		while ($currAlbumID = $workedOnResult->fetch()["aid"]) {
+			$albums[$i++] = $currAlbumID;
 		}
 	}
-	$result = [$artistName, $albums];
+	$result = array();
+	$result["name"] = $artistName;
+	$result["albums"] = $albums;
 	return $result;
 }
 
 function viewArtist($db, $artistID) {
 	$artistInfo = getArtist($db, $artistID);
-	print_r($artistInfo);
+	$workedOnAlbums = $artistInfo["albums"];
+	foreach($workedOnAlbums as $currAlbumID) {
+		showAlbumImage($db, $currAlbumID, FALSE);
+	}
 }
 
 function showLandingPage() {
