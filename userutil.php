@@ -10,7 +10,15 @@ function showSongsList($songsData) {
 		$currArtist = $currSong["artists"];
 		$currDuration = $currSong["duration"];
 		print("<TD>$trackNum</TD>\n");
-		print("<TD>$currName<br>" . implode(", ", $currArtist). "</TD>\n");
+
+
+		$artistString = "";
+		foreach(array_keys($currArtist) as $currArtistID) {
+			$artistString = $artistString . "<a href=?op=artist&artid=$currArtistID> ".
+				$currArtist[$currArtistID] . "</a>,&nbsp;";
+		}
+
+		print("<TD>$currName<br>" . rtrim($artistString, ",&nbsp;"). "</TD>\n");
 		print("<TD align='right'></TD>\n");
 		print("<TD>" . gmdate("i:s", $currDuration) . "</TD>\n");
 		print("</TR>\n");
@@ -67,8 +75,8 @@ function getArtistsFromMedia($db, $mediaID, $mediaType) {
 	$artistResult = $db->query($artistQuery);
 	$artists = [];
 	//todo add error handling
-	while ($artistInfo = $artistResult->fetch()) {
-		$artists[$artistInfo["artid"]] = $artistInfo["artname"];
+	while ($artistData = $artistResult->fetch()) {
+		$artists[$artistData["artid"]] = $artistData["artname"];
 	}
 	return $artists;
 }
@@ -118,7 +126,7 @@ function viewAlbum($db, $albumID, $userID) {
 		print("<DIV class='row'>");
 
 			print("<DIV class='col-md-3'>\n");
-				$srcLink = "art/$albumID.png";
+				$srcLink = "art/cover/$albumID.png";
 				$alttext = $albumData["name"];
 				print("<img src=$srcLink alt='$alttext cover' " . 
 					"height='100%', width='100%'>");
@@ -140,9 +148,9 @@ function viewAlbum($db, $albumID, $userID) {
 					$artistString = "";
 					foreach(array_keys($albumArtists) as $currArtistID) {
 						$artistString = $artistString . "<a href=?op=artist&artid=$currArtistID> ".
-							$albumArtists[$currArtistID] . "</a>, &nbsp;";
+							$albumArtists[$currArtistID] . "</a>,&nbsp;";
 					}
-					print(rtrim($artistString, ", &nbsp;") . "&nbsp;&bull; ");
+					print(rtrim($artistString, ",&nbsp;") . "&nbsp;&bull; ");
 					print($albumData["release_date"] . "  &bull;  ");
 
 					// derive song count and album length
@@ -177,6 +185,8 @@ function viewAlbum($db, $albumID, $userID) {
 		print("<DIV class='row c_text' style='height: 100px; margin-top: 20px'><p>");
 			print("uploaded by " . $albumData["uploader"]);
 		print("</p></DIV>");
+		// spacer
+		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
 
 	print("</DIV>\n");
 }
@@ -198,7 +208,7 @@ function showCollectionImage($db, $collectionID) {
 function showAlbumImage($db, $albumID, $showArtists) {
 	$albumData = getAlbum($db, $albumID);
 	$artistsData = getArtistsFromMedia($db, $albumID, "A");
-	$srcLink = "art/$albumID.png";
+	$srcLink = "art/cover/$albumID.png";
 	$albumName = $albumData["name"];
 	print("<a href='?op=album&aid=$albumID'>");
 		print("<DIV class='tile'>\n");
@@ -219,7 +229,7 @@ function showPlaylistImage($db, $playlistID) {
 	//todo
 }
 
-// returns the artist name and data for all albums created by that artist
+// returns the artist name and albumIDs created by that artist
 function getArtist($db, $artistID) {
 	$nameQuery = "SELECT artname FROM artist WHERE artid=$artistID";
 	$nameResult = $db->query($nameQuery);
@@ -249,12 +259,78 @@ function getArtist($db, $artistID) {
 }
 
 function viewArtist($db, $artistID) {
-	$artistInfo = getArtist($db, $artistID);
-	$workedOnAlbums = $artistInfo["albums"];
-	foreach($workedOnAlbums as $currAlbumID) {
-		showAlbumImage($db, $currAlbumID, FALSE);
+	$artistData = getArtist($db, $artistID);
+	$workedOnAlbums = $artistData["albums"];
+	
+
+	print("<DIV class='container' style='height: 100vh; " . 
+	"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
+
+	print("<DIV class='row'>");
+
+		// ART SPOT: could reuse this if adding artist PFPs
+		print("<DIV class='col-md-3'>\n");
+			$srcLink = "art/profile/$artistID.png";
+			$alttext = $artistData["name"];
+			print("<img src=$srcLink alt='$alttext cover' " . 
+				"height='100%', width='100%'>");
+		print("</DIV>");
+
+		print("<DIV class='col-md-9 my-auto'>\n");
+
+			print("<DIV class='row textRow'>\n");
+				print("ARTIST");
+			print("</DIV>\n");
+
+			// artist name
+			print("<DIV class='row headerRow'>\n");
+				print("<b>" . $artistData["name"] . "</b>");
+			print("</DIV>\n");
+
+			$numAlbums = count($workedOnAlbums);
+			if ($numAlbums > 1) {
+				$numAlbumsString = $numAlbums . " albums";
+			}
+			else {
+				$numAlbumsString = $numAlbums . " album";
+			}
+			print("<DIV class='row textRow'>\n");
+				print("$numAlbumsString");
+			print("</DIV>\n");
+
+		print("</DIV>\n");
+
+	print("</DIV>\n");
+
+	print("<DIV class='row headerRow' style='font-size: 30px; margin-top: 20px'>\n");
+		print("<b>Albums</b>");
+	print("</DIV>\n");
+
+	// NOT WORKING
+	print("<DIV class='scrollable-container'>\n");
+		print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
+		foreach($workedOnAlbums as $currAlbumID) {
+			// messed up for testing. trying to make horizontally-scrolling div.
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumImage($db, $currAlbumID, FALSE);
+		}
+		print("</DIV>\n");
+	print("</DIV>\n");
+
+	// then, add a horizontally-scrolling list of some playlists (max 10) this artist appears in.
+	// alternatively, a message: "this artist has been added to no playlists. Why not be the first?"
+		// spacer
+		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
+	print("</DIV>\n");
 	}
-}
 
 function showLandingPage() {
 	// removed overflow to try to prevent scrollability

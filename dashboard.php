@@ -45,8 +45,7 @@ switch($op) {
 <DIV class="container-fluid" style="height: 100vh; position: fixed;"> <!---->
 <DIV class="row">
 	<!--SIDEBAR: MENUS, LOGIN-->
-	<DIV class="col-md-2 c_menuBackdrop"> <!--style=
-	'padding-bottom: 100%; margin-bottom: -100%;'-->
+	<DIV class="col-md-2 c_menuBackdrop">
 		<DIV class="f_headerText" style="text-align: center;"><b>REMster</b></DIV>
 		<?php
 
