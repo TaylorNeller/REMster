@@ -36,7 +36,7 @@ function viewUploadForm($db, $user) {
 						</div>
 						</br>
 						<button id="add-song" name="add-song" type='button' class="btn song-control" onclick="addSongForm()">Add Song</button>
-						<button id="remove-song" name="add-song" type='button' class="btn song-control" onclick="removeSongForm()">Remove Song</button>
+						<button id="remove-song" name="remove-song" type='button' class="btn song-control" onclick="removeSongForm()">Remove Song</button>
 					</div>
 					<p class="song-p">Release Date</p>
 					<input name="rdate" class="fm-input" type="text"/>
@@ -50,11 +50,11 @@ function viewUploadForm($db, $user) {
 function processAlbumUpload($db, $user, $formData) {
 
 	$aname = $formData['aname'];
-	print("<p>$aname</p>");
+	// print("<p>$aname</p>");
 	$names = $formData["sname"];
-	foreach ($names as $n) {
-		print("<p>$n</p>");
-	}
+	// foreach ($names as $n) {
+	// 	print("<p>$n</p>");
+	// }
 	$genres = $formData["sgenre"];
 	$genreArr = [];
 	$genreSet = [];
@@ -112,8 +112,8 @@ function processAlbumUpload($db, $user, $formData) {
 	// 	print("<h1>ERROR FINDING aid</h1>");
 	// }
 	// $aid = $r2->fetch()["aid"];
-	$aid = mysqli_insert_id($db);
-	print("<h1>aid:$aid</h1>");
+	$aid = $db->lastInsertId();
+	// print("<h1>aid:$aid</h1>");
 
 	// updates 'song'
 	$sids = [];
@@ -127,7 +127,7 @@ function processAlbumUpload($db, $user, $formData) {
 		if ($res == FALSE) {
 			print("<h1>ERROR UPDATING 'song'</h1>");
 		}
-		$sid = mysqli_insert_id($db);
+		$sid = $db->lastInsertId();
 		array_push($sids,$sid);
 	}
 
@@ -136,7 +136,7 @@ function processAlbumUpload($db, $user, $formData) {
 	$artistIds = [];
 
 	foreach ($artsSet as $artist) {
-		$sQuery = "SELECT * FROM artist WHERE artname=$artist";
+		$sQuery = "SELECT * FROM artist WHERE artname='$artist'";
 		$res = $db->query($sQuery);
 		if ($res == FALSE) {
 			print("<h1>ERROR RETRIEVING 'artid'</h1>");
@@ -158,11 +158,10 @@ function processAlbumUpload($db, $user, $formData) {
 	}
 
 	// updates 'song_artist'
-
 	for ($x = 0; $x < count($sids); $x++) {
 		$sid = $sids[$x];
 		for ($i = 0; $i < count($artsArr[$x]); $i++) {
-			$index = array_search($artsSet, $artsArr[$x][$i]);
+			$index = array_search($artsArr[$x][$i],$artsSet);
 			$artId = $artistIds[$index];
 			$sQuery = "INSERT INTO song_artist(sid,artid) "
 					."VALUE($sid,$artId)";
@@ -181,7 +180,7 @@ function processAlbumUpload($db, $user, $formData) {
 	$genreIds = [];
 
 	foreach ($genreSet as $genre) {
-		$sQuery = "SELECT * FROM genre WHERE gname=$genre";
+		$sQuery = "SELECT * FROM genre WHERE gname='$genre'";
 		$res = $db->query($sQuery);
 		if ($res == FALSE) {
 			print("<h1>ERROR RETRIEVING 'gname'</h1>");
@@ -207,7 +206,7 @@ function processAlbumUpload($db, $user, $formData) {
 	for ($x = 0; $x < count($sids); $x++) {
 		$sid = $sids[$x];
 		for ($i = 0; $i < count($artsArr[$x]); $i++) {
-			$index = array_search($genreSet, $genreArr[$x][$i]);
+			$index = array_search($genreArr[$x][$i],$genreSet);
 			$genreId = $genreIds[$index];
 			$sQuery = "INSERT INTO song_genre(sid,gid) "
 					."VALUE($sid,$genreId)";
@@ -227,6 +226,129 @@ function processAlbumUpload($db, $user, $formData) {
 		$res = $db->query($sQuery);
 		if ($res == FALSE) {
 			print("<h1>ERROR UPDATING 'song_album'</h1>");
+		}
+	}
+
+
+}
+
+function viewRemoveForm($db, $user) {
+	$q1 = "SELECT * FROM album NATURAL JOIN album_artist NATURAL JOIN artist WHERE uploader='$user'";
+	$res = $db->query($q1);
+	if ($res != FALSE) {
+
+		$table = [];
+
+		while ($row = $res->fetch()) {
+
+			$aid = $row["aid"];
+			$aname = $row["aname"];
+			$adate = $row["release_date"];
+			$artname = $row["artname"];
+
+
+			if (array_key_exists("$aid",$table)) {
+				if (!in_array($artname,$table["$aid"][1])) {
+					array_push($table["$aid"][1], $artname);
+				}
+			}
+			else {
+				$table["$aid"] = [$aname, [$artname], $adate];
+			}
+		}
+
+
+		?>
+			<form name="remove-albums" method="POST" action="?op=remove">
+				<table>
+				<tr><th>Album Name</th><th>Artist</th><th>Release Date</th><th>
+					<input type="submit" value="Delete Checked Albums"/>
+				</th></tr>
+		<?php
+			foreach ($table as $aid => $arr) {
+				$aname = $arr[0];
+				$artists = $arr[1];
+				$a1 = $artists[0];
+				$adate = $arr[2];
+
+				print("<tr><td>$aname</td><td>$a1");
+				for ($i = 1; $i < count($artists); $i++) {
+					$artist = $artists[$i];
+					print(", $artist");
+				}
+				print("</td><td>$adate</td>");
+				print("<td><input name='cbAlbums[]' type='checkbox' value='$aid'/></td></tr>");
+			}
+		?>
+				</table>
+			</form>
+		<?php
+	}
+}
+
+function processAlbumRemoval($db, $formData) {
+	$aids = $formData["cbAlbums"];
+
+	// finds song ids
+
+	$sids = [];
+
+	$count = $aids[0];
+
+	foreach ($aids as $aid) {
+		$sQuery = "SELECT sid FROM song_album WHERE aid=$aid";
+		$res = $db->query($sQuery);
+		if ($res == FALSE) {
+			print("<h1>ERROR RETRIEVING 'sid'</h1>");
+		}
+		while ($row = $res->fetch()) {
+			$sid = $row["sid"];
+			array_push($sids,$sid);
+		}
+	}
+	// updates 'song_genre', 'song_artist', 'song'
+	
+	foreach ($sids as $sid) {
+		$q1 = "DELETE FROM song_genre WHERE sid=$sid";
+		$r2 = $db->query($q1);
+		if ($r2 == FALSE) {
+			print("<h1>ERROR UPDATING 'song_genre'</h1>");
+		}
+		$q2 = "DELETE FROM song_artist WHERE sid=$sid";
+		$r2 = $db->query($q2);
+		if ($r2 == FALSE) {
+			print("<h1>ERROR UPDATING 'song_artist'</h1>");
+		}
+		$q3 = "DELETE FROM song WHERE sid=$sid";
+		$r3 = $db->query($q3);
+		if ($r3 == FALSE) {
+			print("<h1>ERROR UPDATING 'song'</h1>");
+		}
+	}
+
+	// updates 'album', 'album_genre', 'song_album', 'album_artist'
+
+
+	foreach ($aids as $aid) {
+		$q1 = "DELETE FROM album WHERE aid=$aid";
+		$r1 = $db->query($q1);
+		if ($r1 == FALSE) {
+			print("<h1>ERROR UPDATING 'album'</h1>");
+		}
+		$q2 = "DELETE FROM album_genre WHERE aid=$aid";
+		$r2 = $db->query($q2);
+		if ($r2 == FALSE) {
+			print("<h1>ERROR UPDATING 'album_genre'</h1>");
+		}
+		$q3 = "DELETE FROM song_album WHERE aid=$aid";
+		$r3 = $db->query($q3);
+		if ($r3 == FALSE) {
+			print("<h1>ERROR UPDATING 'song_album'</h1>");
+		}
+		$q4 = "DELETE FROM album_artist WHERE aid=$aid";
+		$r4 = $db->query($q4);
+		if ($r4 == FALSE) {
+			print("<h1>ERROR UPDATING 'album_artist'</h1>");
 		}
 	}
 

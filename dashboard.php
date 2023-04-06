@@ -80,6 +80,11 @@ switch($op) {
 						."<DIV class='row sideMenu' style='white-space: nowrap'>"
 						."Upload Album</DIV></A>");
 			}
+			if (isAdmin($db, $_SESSION["uname"])) {
+				print("<A href='?op=removefm'>"
+						."<DIV class='row sideMenu' style='white-space: nowrap'>"
+						."Remove Album</DIV></A>");
+			}
 		?>
 		<!--SPACER-->
 		<DIV class="col-md-2 c_menuBackdrop" style='height: 50px'></DIV>
@@ -120,6 +125,12 @@ switch($op) {
 					break;
 				case "upload":
 					processAlbumUpload($db, $_SESSION["uname"], $_POST);
+					break;
+				case "removefm":
+					viewRemoveForm($db, $_SESSION["uname"]);
+					break;
+				case "remove":
+					processAlbumRemoval($db, $_POST);
 					break;
 			}
 		}

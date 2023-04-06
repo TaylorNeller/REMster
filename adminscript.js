@@ -23,16 +23,18 @@ function addSongForm() {
     newElement = document.createElement("div");
     newElement.classList.add("add-song");
     newElement.innerHTML = htmlString;
-    button = songContainer.children[songContainer.children.length - 2];
-    songContainer.insertBefore(newElement, button);
+    br = songContainer.children[songContainer.children.length - 3]; // 2 buttons and <br> at end
+    songContainer.insertBefore(newElement, br);
 }
 
-function addSongForm() {
-    if (songCounter >= 0) {
+function removeSongForm() {
+    console.log("hm");
+
+    if (songCounter > 0) {
     
         songContainer = document.getElementById("song-container");
-        lastSong = songContainer.children[songCounter];
-        // songContainer.classList.
+        lastSong = songContainer.children[songCounter+1]; // header at beginning
+        songContainer.removeChild(lastSong);
     
         songCounter--;
     }
