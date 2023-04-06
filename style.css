@@ -90,3 +90,30 @@
 .add-song {
 	display:inline-block;
 }
+
+.song-control {
+	margin-top: 1rem;
+	display: block;
+	background-color: grey;
+	font-size: 20px;
+}
+
+.song-p {
+	font-family: 'Gill Sans', sans-serif;
+	color: #E8E9EC;
+	margin-top: 1rem;
+	margin-bottom: .1rem;
+}
+
+.fm-text {
+	color:#E8E9EC;
+}
+
+#song-heading {
+	margin-bottom: -.5rem;
+}
+
+#song-container {
+	padding-top: 1rem;
+	overflow-x: auto;
+}

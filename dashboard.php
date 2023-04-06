@@ -87,6 +87,7 @@ switch($op) {
 		<DIV class="row sideMenu" style="white-space: nowrap">
 			All Playlists
 		</DIV></A>
+		
 
 		<!--put playlists down here!-->
 	</DIV>
@@ -118,7 +119,7 @@ switch($op) {
 					viewUploadForm($db, $_SESSION["uname"]);
 					break;
 				case "upload":
-					processAlbumUpload($db, $_POST);
+					processAlbumUpload($db, $_SESSION["uname"], $_POST);
 					break;
 			}
 		}
