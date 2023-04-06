@@ -198,7 +198,7 @@ function showCollectionImage($db, $collectionID) {
 					"WHERE aid=$collectionID";
 	$albumTestResult = $db->query($albumTest);
 	if ($albumTestResult != FALSE) {
-		showAlbumImage($db, $collectionID);
+		showAlbumImage($db, $collectionID,FALSE);
 	}
 	else {
 		showPlaylistImage($db, $collectionID);

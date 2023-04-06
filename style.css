@@ -86,3 +86,7 @@
 .scrollable-content {
 	display: flex;
 }
+
+.add-song {
+	display:inline-block;
+}

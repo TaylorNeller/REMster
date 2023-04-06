@@ -3,7 +3,7 @@
 include_once("db_connect.php");
 include("bootstrap.php");
 include("userutil.php");
-
+include("adminutil.php");
 
 session_start();
 // unset($_SESSION["uname"]);
@@ -39,6 +39,7 @@ switch($op) {
 <HEAD>
 	<TITLE>REMSTER 0.0</TITLE>
 	<link rel="stylesheet" href="style.css">
+	<script src="adminscript.js"></script> 
 </HEAD>
 <BODY>
 <!--FULL OUTER SITE CONTAINER-->
@@ -73,12 +74,20 @@ switch($op) {
 		<DIV class="row sideMenu" style="white-space: nowrap">
 			DJ Mode
 		</DIV></A>
+		<?php
+			if (isAdmin($db, $_SESSION["uname"])) {
+				print("<A href='?op=uploadfm'>"
+						."<DIV class='row sideMenu' style='white-space: nowrap'>"
+						."Upload Album</DIV></A>");
+			}
+		?>
 		<!--SPACER-->
 		<DIV class="col-md-2 c_menuBackdrop" style='height: 50px'></DIV>
 		<A href="?op=playlists">
 		<DIV class="row sideMenu" style="white-space: nowrap">
 			All Playlists
 		</DIV></A>
+
 		<!--put playlists down here!-->
 	</DIV>
 	<!--CONENT-->
@@ -104,6 +113,12 @@ switch($op) {
 					break;
 				case "album":
 					viewCollection($db, $_GET["aid"], "10");
+					break;
+				case "uploadfm":
+					viewUploadForm($db, $_SESSION["uname"]);
+					break;
+				case "upload":
+					processAlbumUpload($db, $_POST);
 					break;
 			}
 		}
