@@ -118,7 +118,10 @@ switch($op) {
 					viewArtist($db, $_GET["artid"]);
 					break;
 				case "album":
-					viewCollection($db, $_GET["aid"], "10");
+					viewAlbum($db, $_GET["aid"]);
+					break;
+				case "playlist":
+					viewPlaylist($db, $_GET["pid"], $userID);
 					break;
 				case "uploadfm":
 					viewUploadForm($db, $userID);

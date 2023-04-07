@@ -31,31 +31,58 @@ function viewCollection($db, $collectionID, $userID) {
 					"WHERE aid=$collectionID";
 	$albumTestResult = $db->query($albumTest);
 	if ($albumTestResult != FALSE) {
-		viewAlbum($db, $collectionID, $userID);
+		viewAlbum($db, $collectionID);
 	}
 	else {
-		viewPlaylist($db, $collectionID, $userID);
+		viewPlaylist($db, $collectionID);
+	}
+}
+
+function getPlaylistData($db, $playlistID) {
+	$playlistQuery = "SELECT * " . 
+						"FROM playlist " . 
+						"WHERE pid=$playlistID";
+	$playlistResult = $db->query($playlistQuery);
+	if ($playlistResult != FALSE) {
+		$target = $playlistResult->fetch();
+		$playlistData = [];
+		$playlistData["name"] = $target["pname"];
+		$playlistData["owner"] = $target["owner"];
+		$playlistData["public"] = $target["is_public"];
+	}
+	else {
+		// playlist doesn't exist, handle accordingly
 	}
 }
 
 function viewPlaylist($db, $playlistID, $userID) {
-	//todo
+	// retrieve playlist metadata
+	$playlistData = getPlaylistData($db, $playlistID);
+	if ($playlistData["is_public"] == FALSE && $playlistData["owner"] != $userID) {
+		// logged in user does not have access to this playlist
+		// send to error function
+	}
+	// get songs with handy dandy method
+	$playlistSongs = getSongs($bd, $playlistID, "P");
+
+
 }
 
-function getAlbum($db, $albumID) {
+function getAlbumData($db, $albumID) {
 	$albumQuery = 	"SELECT * " . 
 						"FROM album " .
 						"WHERE aid=$albumID";
 	$albumResult = $db->query($albumQuery);
 	if ($albumResult != FALSE) {
-		$Target = $albumResult->fetch();
+		$target = $albumResult->fetch();
 		$albumData = [];
-		$albumData["name"] = $Target["aname"];
-		$albumData["release_date"] = $Target["release_date"];
-		$albumData["uploader"] = $Target["uploader"];
+		$albumData["name"] = $target["aname"];
+		$albumData["release_date"] = $target["release_date"];
+		$albumData["uploader"] = $target["uploader"];
 	}
 	else {
-		// todo this isnt quite working
+		// album doesn't exist, handle accordingly
+		// not working
 		header("refresh:2;url=dashboard.php?op=404&src=album");
 	}
 	return $albumData;
@@ -97,7 +124,7 @@ function getSongs($db, $mediaID, $mediaType) {
 		case "P":
 			$songQuery = 	"SELECT sid, sname, duration, release_date " .
 							"FROM song_playlist NATURAL JOIN song " .
-							"WHERE aid=$mediaID";
+							"WHERE pid=$mediaID";
 			break;
 	}
 	$songResult = $db->query($songQuery);
@@ -117,9 +144,9 @@ function getSongs($db, $mediaID, $mediaType) {
 }
 
 //handles front-end display of an album.
-function viewAlbum($db, $albumID, $userID) {
+function viewAlbum($db, $albumID) {
 	// retrieve album data (metadata, artists, songs)
-	$albumData = getAlbum($db, $albumID);
+	$albumData = getAlbumData($db, $albumID);
 	$albumArtists = getArtistsFromMedia($db, $albumID, "A");
 	$albumSongs = getSongs($db, $albumID, "A");
 	//todo: implement error handling in those methods
@@ -186,7 +213,7 @@ function viewAlbum($db, $albumID, $userID) {
 		showSongsList($albumSongs);
 		print("</TABLE>\n</DIV>\n");
 
-		print("<DIV class='row c_text' style='height: 100px; margin-top: 20px'><p>");
+		print("<DIV class='row f_standardText' style='height: 100px; margin-top: 20px'><p>");
 			print("uploaded by " . $albumData["uploader"]);
 		print("</p></DIV>");
 		// spacer
@@ -210,7 +237,7 @@ function showCollectionImage($db, $collectionID) {
 }
 
 function showAlbumTile($db, $albumID, $showArtists) {
-	$albumData = getAlbum($db, $albumID);
+	$albumData = getAlbumData($db, $albumID);
 	$artistsData = getArtistsFromMedia($db, $albumID, "A");
 	$srcLink = "art/cover/$albumID.png";
 	$albumName = $albumData["name"];
@@ -236,7 +263,7 @@ function showAlbumTile($db, $albumID, $showArtists) {
 	print("</a>");
 }
 
-function showPlaylistImage($db, $playlistID) {
+function showPlaylistTile($db, $playlistID) {
 	//todo
 }
 
@@ -274,8 +301,7 @@ function viewArtist($db, $artistID) {
 	$workedOnAlbums = $artistData["albums"];
 	
 
-	print("<DIV class='container' style='height: 100vh; " . 
-	"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
+	print("<DIV class='container contentContainer'>\n");
 
 	print("<DIV class='row'>");
 
@@ -321,16 +347,6 @@ function viewArtist($db, $artistID) {
 	print("<DIV class='scrollable-container'>\n");
 		print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
 		foreach($workedOnAlbums as $currAlbumID) {
-			// messed up for testing. trying to make horizontally-scrolling div.
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
-			showAlbumTile($db, $currAlbumID, FALSE);
 			showAlbumTile($db, $currAlbumID, FALSE);
 		}
 		print("</DIV>\n");
@@ -338,6 +354,12 @@ function viewArtist($db, $artistID) {
 
 	// then, add a horizontally-scrolling list of some playlists (max 10) this artist appears in.
 	// alternatively, a message: "this artist has been added to no playlists. Why not be the first?"
+
+		print("<DIV class='row headerRow' style='font-size: 30px; margin-top: 20px'>\n");
+		print("<b>Appears In</b>");
+		print("</DIV>\n");
+
+
 		// spacer
 		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
 	print("</DIV>\n");
@@ -345,8 +367,7 @@ function viewArtist($db, $artistID) {
 
 function showLandingPage() {
 	// removed overflow to try to prevent scrollability
-	print("<DIV class='container' style='height: 100vh; " . 
-		"margin-left: 20px; margin-top: 20px'>\n");
+	print("<DIV class='container contentContainer'>\n");
 		print("<DIV class='f_headerText' style='text-align: center; " . 
 			"width: 100%; margin-top: 50px'>\n");
 		print("<b>Welcome to REMster.<br>All music, no hassle.</b>\n");
@@ -424,8 +445,7 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 // view the main homepage of the site. 
 // for some reason this gets rid of the control bar at the bottom.
 function viewHomepage($db, $userID) {
-	print("<DIV class='container' style='height: 100vh; " . 
-	"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
+	print("<DIV class='container contentContainer'>\n");
 		print("<DIV class='headerRow'>\n");
 		print("<p>Welcome back, <b>$userID.</b></p>\n");
 		print("</DIV>\n");
@@ -439,6 +459,7 @@ function viewHomepage($db, $userID) {
 
 		print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
 		print("<p>Continue listening</p>\n");
+		print("</DIV>\n");
 			print("<DIV class='scrollable-container'>\n");
 			print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
 			for($i = 0; $i < $maxIndex; $i++) {
