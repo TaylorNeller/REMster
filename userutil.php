@@ -54,6 +54,10 @@ function getAlbum($db, $albumID) {
 		$albumData["release_date"] = $Target["release_date"];
 		$albumData["uploader"] = $Target["uploader"];
 	}
+	else {
+		// todo this isnt quite working
+		header("refresh:2;url=dashboard.php?op=404&src=album");
+	}
 	return $albumData;
 }
 
@@ -198,14 +202,14 @@ function showCollectionImage($db, $collectionID) {
 					"WHERE aid=$collectionID";
 	$albumTestResult = $db->query($albumTest);
 	if ($albumTestResult != FALSE) {
-		showAlbumImage($db, $collectionID,FALSE);
+		showAlbumTile($db, $collectionID,FALSE);
 	}
 	else {
 		showPlaylistImage($db, $collectionID);
 	}
 }
 
-function showAlbumImage($db, $albumID, $showArtists) {
+function showAlbumTile($db, $albumID, $showArtists) {
 	$albumData = getAlbum($db, $albumID);
 	$artistsData = getArtistsFromMedia($db, $albumID, "A");
 	$srcLink = "art/cover/$albumID.png";
@@ -216,9 +220,16 @@ function showAlbumImage($db, $albumID, $showArtists) {
 				"style='height:100%; width:100%; object-fit: cover'>");
 			$tileInfo = "<b>$albumName</b> &bull; ". substr($albumData["release_date"], 0, 4) . " <br>";
 			if ($showArtists) {
-				foreach(array_values($artistsData) as $currArtist) {
-					$tileInfo = $tileInfo . $currArtist . "<br>\n";
+				if (count($artistsData) > 2) {
+					$tileInfo = $tileInfo . array_values($artistsData)[0] . "<br>\n";
+					$tileInfo = $tileInfo . "and others";
 				}
+				else {
+					foreach(array_values($artistsData) as $currArtist) {
+						$tileInfo = $tileInfo . $currArtist . "<br>\n";
+					}
+				}
+				
 			}
 			print("<p class='textRow' style='text-align: center'>\n$tileInfo</p>\n");
 		print("</DIV>\n");
@@ -311,16 +322,16 @@ function viewArtist($db, $artistID) {
 		print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
 		foreach($workedOnAlbums as $currAlbumID) {
 			// messed up for testing. trying to make horizontally-scrolling div.
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
-			showAlbumImage($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
+			showAlbumTile($db, $currAlbumID, FALSE);
 		}
 		print("</DIV>\n");
 	print("</DIV>\n");
@@ -410,6 +421,61 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 	}
 }
 
+// view the main homepage of the site. 
+// for some reason this gets rid of the control bar at the bottom.
+function viewHomepage($db, $userID) {
+	print("<DIV class='container' style='height: 100vh; " . 
+	"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
+		print("<DIV class='headerRow'>\n");
+		print("<p>Welcome back, <b>$userID.</b></p>\n");
+		print("</DIV>\n");
+
+		// fetch albums for "continue listening"
+		// TODO make this actually pull from recent listening
+
+		$albumQuery = "SELECT aid FROM album";
+		$albumResult = $db->query($albumQuery);
+		$maxIndex = 10 > count($albumQuery) ? count($albumQuery) : 10;
+
+		print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
+		print("<p>Continue listening</p>\n");
+			print("<DIV class='scrollable-container'>\n");
+			print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
+			for($i = 0; $i < $maxIndex; $i++) {
+				$currAlbumID = $albumResult->fetch()["aid"];
+				showAlbumTile($db, $currAlbumID, TRUE);
+			}
+			print("</DIV>\n");
+			print("</DIV>\n");
+		print("</DIV>\n");
+	print("</DIV>\n");
+}
+
+
+// display an error page when going to an unknown artist, album, or playlist.
+function show404($errorSource) {
+	print("<DIV class='headerRow'>\n");
+	print("<p><b>Whoops!</b></p>\n");
+	print("</DIV>\n");
+
+	$errorMsg = "You tried to access a";
+	switch ($errorSource) {
+		case "album":
+			$errorMsg = $errrorMsg . "n album";
+			break;
+		case "artist":
+			$errorMsg = $errrorMsg . "n artist";
+			break;
+		case "playlist":
+			$errorMsg = $errrorMsg . " playlist";
+			break;
+	}
+	$errorMsg = $errrorMsg . "that doesn't exist! Redirecting to home...";
+	print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
+	print("<p>$errorMsg</p>\n");
+	print("</DIV>\n");
+	header("refresh:2;url=dashboard.php?op=home");
+}
 
 
 
