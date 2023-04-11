@@ -87,13 +87,19 @@
 	display: flex;
 }
 
+#first-add-song {
+	padding-right: .2rem;
+}
+
 .add-song {
 	display:inline-block;
+	padding-right: .3rem;
 }
 
 .song-control {
 	margin-top: 1rem;
-	display: block;
+	margin-right: .3rem;
+	display: inline-block;
 	background-color: grey;
 	font-size: 20px;
 }
@@ -110,10 +116,74 @@
 }
 
 #song-heading {
+	margin-top: 1rem;
 	margin-bottom: -.5rem;
 }
 
 #song-container {
-	padding-top: 1rem;
+	padding-top: .5rem;
 	overflow-x: auto;
+	white-space: nowrap;
+	padding-bottom: .5rem;
+}
+
+#upload-btn {
+	margin-top: 1rem;
+	background-color: darkslategray;
+	font-weight: bold;
+}
+
+
+#outer-row {
+	min-height: 100%;
+	color:#E8E9EC;
+}
+
+#remove-table, #remove-table th, #remove-table td {
+	border: 2px solid grey;
+	color:#E8E9EC;
+}
+
+#remove-table th, #remove-table td {
+	padding: 10px;
+}
+
+.cb-td {
+	text-align: center;
+  vertical-align: middle;
+  position: relative;
+}
+
+
+  input[type="checkbox"] {
+	appearance: none;
+	width: 25px;
+	height: 25px;
+	border: 2px solid #333;
+	border-radius: 5px;
+	background-color: #fff;
+	transition: background-color 0.3s ease;
+	position: relative;
+  }
+  
+  input[type="checkbox"]:checked:after {
+	content: "\2714";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	font-size: 18px;
+	color: #333;
+  }
+  
+  input[type="checkbox"]:checked {
+	background-color: #999;
+  }
+  
+.rem-h2 {
+	font-weight: bold;
+}
+
+.c_background {
+	padding: 2rem;
 }

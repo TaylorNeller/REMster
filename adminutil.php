@@ -1,5 +1,7 @@
 <?php
 include_once("db_connect.php");
+ini_set('upload_max_filesize', '100M');
+ini_set('post_max_size', '100M');
 
 function isAdmin($db, $user) {
 	$query = "SELECT * FROM admins WHERE uname='$user'";
@@ -18,29 +20,41 @@ function viewUploadForm($db, $user) {
     			counterReset();
 			</script> -->
 			<div id="form-container">
-				<form name="upload-album" method="POST" action="?op=upload">
+				<form enctype="multipart/form-data" name="upload-album" method="POST" action="?op=upload">
 					<h1 class="fm-text">Album Name</h1>
-					<input name="aname" class="fm-input" type="text"/>
-					<div id="song-container">
-						<h2 id="song-heading" class="fm-text">Songs:</h2>
+					<input name="aname" class="fm-input" type="text" required/>
+					<h2 id="song-heading" class="fm-text">Songs:</h2>
 
-						<div class="add-song">
+					<div id="song-container">
+						
+						<script>addSongForm()</script>
+
+						<!-- <div id="first-add-song" class="add-song">
 							<p class="song-p">Name</p>
-							<input name="sname[0]" class="fm-input" type="text"/>
+							<input name="sname[0]" class="fm-input" type="text" required/>
 							<p class="song-p">Genre</p>
-							<input name="sgenre[0]" class="fm-input" type="text"/>		
+							<input name="sgenre[0]" class="fm-input" type="text" required/>		
 							<p class="song-p">Duration</p>
-							<input name="sdur[0]" class="fm-input" type="text"/>
+							<input name="sdur[0]" class="fm-input" type="text" required/>
 							<p class="song-p">Artists</p>
-							<input name="sarts[0]" class="fm-input" type="text"/>					
-						</div>
+							<input name="sarts[0]" class="fm-input" type="text required"/>					
+							<p class="song-p">Upload MP3:</p>
+							<input type="hidden" name="MAX_FILE_SIZE" value="30000" />
+  							<input name="smp3[0]"type="file" required>
+						</div> -->
 						</br>
-						<button id="add-song" name="add-song" type='button' class="btn song-control" onclick="addSongForm()">Add Song</button>
-						<button id="remove-song" name="remove-song" type='button' class="btn song-control" onclick="removeSongForm()">Remove Song</button>
 					</div>
+					<button id="add-song" name="add-song" type='button' class="btn song-control" onclick="addSongForm()">Add Song</button>
+					<button id="remove-song" name="remove-song" type='button' class="btn song-control" onclick="removeSongForm()">Remove Song</button>
 					<p class="song-p">Release Date</p>
-					<input name="rdate" class="fm-input" type="text"/>
-					<input type="submit" value="Upload Album"/>
+					<input type="date" name="rdate" id="fm-input" pattern="\d{4}-\d{2}-\d{2}" required>
+					<!-- <input name="rdate" class="fm-input" type="text" required/> -->
+					</br><p class="song-p">Upload Album Cover:</p>
+					<input type="hidden" name="MAX_FILE_SIZE" value="1000000" />
+  					<input type="file" id="c-art" name="cover-art" required>
+
+
+  					</br><input id="upload-btn" class="btn" type="submit" value="Upload Album"/>
 				</form>
 			</div>
 		<?php
@@ -48,6 +62,7 @@ function viewUploadForm($db, $user) {
 }
 
 function processAlbumUpload($db, $user, $formData) {
+
 
 	$aname = $formData['aname'];
 	// print("<p>$aname</p>");
@@ -101,19 +116,31 @@ function processAlbumUpload($db, $user, $formData) {
 	// updates 'album'
 	$q1 = "INSERT INTO album(aname,release_date,uploader) "
 			."VALUE('$aname','$rdate','$user')";
-	// $q2 = "SELECT aid FROM album WHERE aname=$aname AND release_date=$rdate AND uploader=$user";
 
 	$r1 = $db->query($q1);
 	if ($r1 == FALSE) {
 		print("<h1>ERROR UPDAING 'album'</h1>");
 	}
-	// $r2 = $db->query($q1);
-	// if ($r2 == FALSE) {
-	// 	print("<h1>ERROR FINDING aid</h1>");
-	// }
-	// $aid = $r2->fetch()["aid"];
-	$aid = $db->lastInsertId();
+	$aid = $db->lastInsertId(); //album id
 	// print("<h1>aid:$aid</h1>");
+
+
+	// upload cover art
+	$image_dir = "art/cover/";
+	$uploadfile = $image_dir . $aid . ".png";
+
+	print("<p>");
+	if (move_uploaded_file($_FILES['cover-art']['tmp_name'], $uploadfile)) {
+		// echo "Image successfully uploaded.\n";
+	} else {
+		echo "Error in image upload!\n";
+		echo 'Here is some more debugging info:';
+		print_r($_FILES);
+	}
+	
+	
+	echo '</p>';
+
 
 	// updates 'song'
 	$sids = [];
@@ -129,6 +156,23 @@ function processAlbumUpload($db, $user, $formData) {
 		}
 		$sid = $db->lastInsertId();
 		array_push($sids,$sid);
+	}
+
+	// upload song mp3s
+	for ($i = 0; $i < count($sids); $i++) {
+		$sid = $sids[$i];
+		$song_dir = "songs/";
+		$uploadfile = $song_dir . $sid . ".mp3";
+	
+		print("<p>");
+		if (move_uploaded_file($_FILES["smp3"]["tmp_name"][$i], $uploadfile)) {
+			// echo "Song with sid $sid successfully uploaded.\n";
+		} else {
+			echo "Error in sid $sid upload!\n";
+			echo 'Here is some more debugging info:';
+			print_r($_FILES);
+		}
+	
 	}
 
 	// retrieves artist ids
@@ -205,9 +249,11 @@ function processAlbumUpload($db, $user, $formData) {
 
 	for ($x = 0; $x < count($sids); $x++) {
 		$sid = $sids[$x];
-		for ($i = 0; $i < count($artsArr[$x]); $i++) {
+		for ($i = 0; $i < count($genreArr[$x]); $i++) {
 			$index = array_search($genreArr[$x][$i],$genreSet);
+			$genre = $genreArr[$x][$i];
 			$genreId = $genreIds[$index];
+
 			$sQuery = "INSERT INTO song_genre(sid,gid) "
 					."VALUE($sid,$genreId)";
 			$res = $db->query($sQuery);
@@ -259,8 +305,9 @@ function viewRemoveForm($db, $user) {
 
 
 		?>
+			<h2 class="rem-h2">Remove Uploaded Albums:</h2>
 			<form name="remove-albums" method="POST" action="?op=remove">
-				<table>
+				<table id="remove-table">
 				<tr><th>Album Name</th><th>Artist</th><th>Release Date</th><th>
 					<input type="submit" value="Delete Checked Albums"/>
 				</th></tr>
@@ -277,12 +324,13 @@ function viewRemoveForm($db, $user) {
 					print(", $artist");
 				}
 				print("</td><td>$adate</td>");
-				print("<td><input name='cbAlbums[]' type='checkbox' value='$aid'/></td></tr>");
+				print("<td class='cb-td'><input class='cb-td' name='cbAlbums[]' type='checkbox' value='$aid'/></td></tr>");
 			}
 		?>
 				</table>
 			</form>
 		<?php
+		echo "<p>Finished uploading</p>";
 	}
 }
 
@@ -352,6 +400,22 @@ function processAlbumRemoval($db, $formData) {
 		}
 	}
 
+	// removes album art
+
+	foreach ($aids as $aid) {
+		$artPath = "art/cover/$aid.png";
+		if (file_exists($artPath)) {
+			unlink($artPath);
+		}
+	}
+	// removes song mp3s
+
+	foreach ($sids as $sid) {
+		$songPath = "songs/$sid.png";
+		if (file_exists($songPath)) {
+    		unlink($songPath);
+		}
+	}
 
 }
 
