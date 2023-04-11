@@ -34,7 +34,7 @@ function viewCollection($db, $collectionID, $userID) {
 		viewAlbum($db, $collectionID);
 	}
 	else {
-		viewPlaylist($db, $collectionID);
+		viewPlaylist($db, $collectionID, $userID);
 	}
 }
 
@@ -63,7 +63,7 @@ function viewPlaylist($db, $playlistID, $userID) {
 		// send to error function
 	}
 	// get songs with handy dandy method
-	$playlistSongs = getSongs($bd, $playlistID, "P");
+	$playlistSongs = getSongs($db, $playlistID, "P");
 
 
 }
@@ -232,7 +232,7 @@ function showCollectionImage($db, $collectionID) {
 		showAlbumTile($db, $collectionID,FALSE);
 	}
 	else {
-		showPlaylistImage($db, $collectionID);
+		showPlaylistTile($db, $collectionID);
 	}
 }
 
@@ -455,7 +455,7 @@ function viewHomepage($db, $userID) {
 
 		$albumQuery = "SELECT aid FROM album";
 		$albumResult = $db->query($albumQuery);
-		$maxIndex = 10 > count($albumQuery) ? count($albumQuery) : 10;
+		$maxIndex = 10 > count($albumResult) ? count($albumResult) : 10;
 
 		print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
 		print("<p>Continue listening</p>\n");
@@ -482,16 +482,16 @@ function show404($errorSource) {
 	$errorMsg = "You tried to access a";
 	switch ($errorSource) {
 		case "album":
-			$errorMsg = $errrorMsg . "n album";
+			$errorMsg = $errorMsg . "n album";
 			break;
 		case "artist":
-			$errorMsg = $errrorMsg . "n artist";
+			$errorMsg = $errorMsg . "n artist";
 			break;
 		case "playlist":
-			$errorMsg = $errrorMsg . " playlist";
+			$errorMsg = $errorMsg . " playlist";
 			break;
 	}
-	$errorMsg = $errrorMsg . "that doesn't exist! Redirecting to home...";
+	$errorMsg = $errorMsg . "that doesn't exist! Redirecting to home...";
 	print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
 	print("<p>$errorMsg</p>\n");
 	print("</DIV>\n");
