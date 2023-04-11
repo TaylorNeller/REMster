@@ -100,16 +100,16 @@ switch($op) {
 	<DIV class="col-md-10 c_background"> <!--style=
 	'padding-bottom: 100%; margin-bottom: -100%;'-->
 		<?php
-		print($_SESSION["uname"]);
 		if (!isset($_SESSION["uname"])) {
 			showLandingPage();
 		}
 		else {
 			$op = $_GET["op"];
+			$userID = $_SESSION["uname"];
 			switch ($op) {
 				case "login":
 				case "home":
-					viewCollection($db, "1", "10");
+					viewHomepage($db, $userID);
 					break;
 				case "search":
 					viewArtist($db, "1");
@@ -118,19 +118,25 @@ switch($op) {
 					viewArtist($db, $_GET["artid"]);
 					break;
 				case "album":
-					viewCollection($db, $_GET["aid"], "10");
+					viewAlbum($db, $_GET["aid"]);
+					break;
+				case "playlist":
+					viewPlaylist($db, $_GET["pid"], $userID);
 					break;
 				case "uploadfm":
-					viewUploadForm($db, $_SESSION["uname"]);
+					viewUploadForm($db, $userID);
 					break;
 				case "upload":
-					processAlbumUpload($db, $_SESSION["uname"], $_POST);
+					processAlbumUpload($db, $userID, $_POST);
 					break;
 				case "removefm":
-					viewRemoveForm($db, $_SESSION["uname"]);
+					viewRemoveForm($db, $userID);
 					break;
 				case "remove":
 					processAlbumRemoval($db, $_POST);
+					break;
+				case "404":
+					show404($_GET["src"]);
 					break;
 			}
 		}
@@ -138,7 +144,7 @@ switch($op) {
 	</DIV>
 </DIV>
 <!--CONTROL DECK / PLAYER-->
-<DIV class="row player">
+<DIV class="row player" style="position:fixed; bottom:0">
 	<p>testtesttesttesttesttesttesttesttesttesttesttest
 	testtesttesttesttesttesttesttesttesttesttesttesttest
 testtesttesttesttesttesttesttesttesttesttesttest<br>testtesttesttesttesttesttesttesttesttesttesttest

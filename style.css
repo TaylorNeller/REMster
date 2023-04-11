@@ -72,19 +72,29 @@
 }
 
 .tile {
+	margin: 20px;
+	border-color: #43485B;
 	flex: 0 0 auto;
 	aspect-ratio: 1 / 1;
-  	width:200px;
+	
+  	width: 150px;
 }
 
 .scrollable-container {
-	width: calc(100% + 256px);
 	overflow-x: scroll;
-	overflow-y: hidden;
 }
 
 .scrollable-content {
 	display: flex;
+	width: 100%;
+}
+
+.contentContainer {
+	height: 100vh;
+	width: auto;
+	overflow: auto;
+	margin-left: 20px;
+	margin-top: 20px;
 }
 
 #first-add-song {
