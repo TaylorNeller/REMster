@@ -197,3 +197,83 @@
 .c_background {
 	padding: 2rem;
 }
+
+
+  .like-btn {
+    display: inline-block;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+	position: relative;
+
+    cursor: pointer;
+  }
+  
+  .heart-icon {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+	position: relative;
+    transform: rotate(45deg);
+	background-color: #2e2e2d;
+
+	/* background-color: #1DB954; */
+	/* border-right: 1px solid red;
+	border-bottom: 1px solid red; */
+	z-index: 1;
+  }
+  
+  .heart-icon:before,
+  .heart-icon:after {
+	/* border: 1px solid red; */
+
+    content: "";
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+	background-color: #2e2e2d;
+    /* background-color: #1DB954; */
+    border-radius: 50% 50% 50% 50%;
+	z-index: -1;
+  }
+  
+  .heart-icon:before {
+    top: -.5rem;
+    left: 0;
+  }
+  
+  .heart-icon:after {
+    top: 0;
+    left: -.5rem;
+    transform: rotate(-90deg);
+  }
+
+  .liked .heart-icon, .liked .heart-icon:before, .liked .heart-icon:after {
+	animation-name: colorChange;
+	animation-duration: 0.3s;
+	animation-fill-mode: forwards;
+	}
+	.not-liked .heart-icon, .not-liked .heart-icon:before, .not-liked .heart-icon:after {
+		animation-name: colorChange2;
+		animation-duration: 0.3s;
+		animation-fill-mode: forwards;
+		}
+  
+  @keyframes colorChange {
+	0% {
+	  background-color: #2e2e2d;
+	}
+	100% {
+	  background-color: #1DB954;
+	}
+  }
+
+  @keyframes colorChange2 {
+	0% {
+	  background-color: #1DB954;
+	}
+	100% {
+	  background-color: #2e2e2d;
+	}
+  }
+  

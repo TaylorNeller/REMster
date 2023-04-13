@@ -40,6 +40,7 @@ switch($op) {
 	<TITLE>REMSTER 0.0</TITLE>
 	<link rel="stylesheet" href="style.css">
 	<script src="adminscript.js"></script> 
+	<script src="userscript.js"></script>
 </HEAD>
 <BODY>
 <!--FULL OUTER SITE CONTAINER-->

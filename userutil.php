@@ -1,4 +1,12 @@
 <?php
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["like-id"] != FALSE) {
+	// Code to process form data and run PHP script
+	print('<p>lllllllll</p>');
+  
+	// Redirect to prevent resubmission on page refresh
+	header("Location: ".$_SERVER['PHP_SELF']);
+	exit();
+  }
 // INTERNAL ONLY function which takes array of song info
 // prints single song in the context of a list of songs
 function showSongsList($songsData) {
@@ -6,6 +14,7 @@ function showSongsList($songsData) {
 	$trackNum = 1;
 	foreach($songsData as $currSong) {
 		print("<TR>\n");
+		$currSid = $currSong["sid"];
 		$currName = $currSong["name"];
 		$currArtist = $currSong["artists"];
 		$currDuration = $currSong["duration"];
@@ -21,8 +30,15 @@ function showSongsList($songsData) {
 		print("<TD>$currName<br>" . rtrim($artistString, ",&nbsp;"). "</TD>\n");
 		print("<TD align='right'></TD>\n");
 		print("<TD>" . gmdate("i:s", $currDuration) . "</TD>\n");
+		print("<TD><form method='POST'>"
+				. "<input type='hidden' name='like-id' value='$currSid'/>"
+				. "<button type='submit' id='like-$currSid' class='like-btn' onclick='toggleLike($currSid)'>"
+				. "<span class='heart-icon'></span></button></form></TD>\n");
 		print("</TR>\n");
 		$trackNum++;
+
+
+		
 	}
 }
 function viewCollection($db, $collectionID, $userID) {
@@ -206,6 +222,7 @@ function viewAlbum($db, $albumID) {
 			"<TH>Title</TH>\n" .
 			"<TH>Liked</TH>\n" .
 			"<TH>Length</TH>\n" .
+			"<TH></TH>\n" .
 			"</TR>\n";
 		print($tableHeader);
 
@@ -286,8 +303,8 @@ function getArtist($db, $artistID) {
 	else {
 		$i = 0;
 		$albums = array();
-		while ($currAlbumID = $workedOnResult->fetch()["aid"]) {
-			$albums[$i++] = $currAlbumID;
+		while ($currAlbumID = $workedOnResult->fetch()) {
+			$albums[$i++] = $currAlbumID["aid"];
 		}
 	}
 	$result = array();

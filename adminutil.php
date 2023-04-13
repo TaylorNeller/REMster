@@ -274,6 +274,7 @@ function processAlbumUpload($db, $user, $formData) {
 			print("<h1>ERROR UPDATING 'song_album'</h1>");
 		}
 	}
+	echo "<p>Finished uploading</p>";
 
 
 }
@@ -330,7 +331,6 @@ function viewRemoveForm($db, $user) {
 				</table>
 			</form>
 		<?php
-		echo "<p>Finished uploading</p>";
 	}
 }
 
@@ -416,6 +416,7 @@ function processAlbumRemoval($db, $formData) {
     		unlink($songPath);
 		}
 	}
+	echo "<p>Finished deleting</p>";
 
 }
 
