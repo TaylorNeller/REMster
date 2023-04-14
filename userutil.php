@@ -240,8 +240,7 @@ function viewAlbum($db, $albumID) {
 	$albumSongs = getSongs($db, $albumID, "A");
 	//todo: implement error handling in those methods
 
-	print("<DIV class='container' style='height: 100vh; " . 
-		"overflow: auto; margin-left: 20px; margin-top: 20px'>\n");
+	print("<DIV class='container contentContainer'>\n");
 
 		print("<DIV class='row'>");
 
@@ -312,18 +311,27 @@ function viewAlbum($db, $albumID) {
 	print("</DIV>\n");
 }
 
-// creates and returns a collection "tile": a clickable object linking to the album/playlist page
-function showCollectionImage($db, $collectionID) {
-	$albumTest = 	"SELECT * " . 
-					"FROM album " .
-					"WHERE aid=$collectionID";
-	$albumTestResult = $db->query($albumTest);
-	if ($albumTestResult != FALSE) {
-		showAlbumTile($db, $collectionID,FALSE);
-	}
-	else {
-		showPlaylistTile($db, $collectionID);
-	}
+// show "All Playlists" page
+function viewPlaylistsPage($db, $userID) {
+	print("<DIV class='container contentContainer'>\n");
+		print("<DIV class='row headerRow'>");
+			print("<b>$userID's playlists</b>\n");
+		print("</DIV>\n");
+	showCreateTile();
+	print("</DIV>\n");
+}
+
+// draws the "create new playlist" tile seen on the Playlists homepage
+function showCreateTile() {
+	$srcLink = "art/playlist/c.png";
+	print("<a href='?op=newplaylist'>");
+		print("<DIV class='tile'>\n");
+			print("<img src=$srcLink alt='create playlist icon' " . 
+				"style='height:100%; width:100%; object-fit: cover'>");
+			$tileInfo = "<b>Create New</b> ";
+			print("<p class='textRow' style='text-align: center'>\n$tileInfo</p>\n");
+		print("</DIV>\n");
+	print("</a>");
 }
 
 function showAlbumTile($db, $albumID, $showArtists) {
@@ -354,7 +362,18 @@ function showAlbumTile($db, $albumID, $showArtists) {
 }
 
 function showPlaylistTile($db, $playlistID) {
-	//todo
+	$playlistData = getPlaylistData($db, $playlistID);
+	$playlistArt = rand(1, 4);
+	$srcLink = "art/playlist/$playlistID.png";
+	$playlistName = $playlistData["name"];
+	print("<a href='?op=playlist&pid=$playlistID'>");
+		print("<DIV class='tile'>\n");
+			print("<img src=$srcLink alt='$playlistName cover' " . 
+				"style='height:100%; width:100%; object-fit: cover'>");
+			$tileInfo = "<b>$playlistName</b> " . "<br>" . $playlistData["owner"];
+			print("<p class='textRow' style='text-align: center'>\n$tileInfo</p>\n");
+		print("</DIV>\n");
+	print("</a>");
 }
 
 // returns the artist name and albumIDs created by that artist
@@ -433,9 +452,8 @@ function viewArtist($db, $artistID) {
 		print("<b>Albums</b>");
 	print("</DIV>\n");
 
-	// NOT WORKING
 	print("<DIV class='scrollable-container'>\n");
-		print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
+		print("<DIV class='scrollable-content' style='margin-top: 10px'>\n");
 		foreach($workedOnAlbums as $currAlbumID) {
 			showAlbumTile($db, $currAlbumID, FALSE);
 		}
@@ -445,15 +463,43 @@ function viewArtist($db, $artistID) {
 	// then, add a horizontally-scrolling list of some playlists (max 10) this artist appears in.
 	// alternatively, a message: "this artist has been added to no playlists. Why not be the first?"
 
-		print("<DIV class='row headerRow' style='font-size: 30px; margin-top: 20px'>\n");
+	print("<DIV class='row headerRow' style='font-size: 30px; margin-top: 20px'>\n");
 		print("<b>Appears In</b>");
+	print("</DIV>\n");
+
+	$appearsInPlaylists = getAppearances($db, $artistID);
+
+	print("<DIV class='scrollable-container'>\n");
+		print("<DIV class='scrollable-content' style='margin-top: 10px'>\n");
+		foreach($appearsInPlaylists as $currPlaylistID) {
+			showPlaylistTile($db, $currPlaylistID);
+		}
 		print("</DIV>\n");
+	print("</DIV>\n");
 
 
 		// spacer
 		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
 	print("</DIV>\n");
 	}
+
+// returns an array of the playlists the given artist appears in
+function getAppearances($db, $artistID) {
+	$appearsInQuery = "SELECT DISTINCT pid FROM song_playlist NATURAL JOIN song_artist " . 
+		"WHERE artid = $artistID";
+	
+	$appearsInResult = $db->query($appearsInQuery);
+	if ($appearsInResult != FALSE) {
+		$appearsInPIDs = [];
+		foreach($appearsInResult->fetch() as $currPID) {
+			array_push($appearsInPIDs, $currPID);
+		}
+	}
+	else {
+		print("ERROR WITH APPEARANCES QUERY" . $appearsInQuery);
+	}
+	return $appearsInPIDs;
+}
 
 function showLandingPage() {
 	// removed overflow to try to prevent scrollability

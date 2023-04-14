@@ -121,8 +121,16 @@ switch($op) {
 				case "album":
 					viewAlbum($db, $_GET["aid"]);
 					break;
+				// this refers to the "all playlists" menu item page
 				case "playlists":
-					viewPlaylist($db, 1, $userID);
+					viewPlaylistsPage($db, $userID);
+					break;
+				// this refers to viewing an individual playlist
+				case "playlist":
+					viewPlaylist($db, $_GET["pid"], $userID);
+					break;
+				case "newplaylist":
+					viewNewPlaylistPage($db, $userID);
 					break;
 				case "uploadfm":
 					viewUploadForm($db, $userID);
