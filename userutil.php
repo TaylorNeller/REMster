@@ -36,21 +36,6 @@ function showSongsList($songsData) {
 				. "<span class='heart-icon'></span></button></form></TD>\n");
 		print("</TR>\n");
 		$trackNum++;
-
-
-		
-	}
-}
-function viewCollection($db, $collectionID, $userID) {
-	$albumTest = 	"SELECT * " . 
-					"FROM album " .
-					"WHERE aid=$collectionID";
-	$albumTestResult = $db->query($albumTest);
-	if ($albumTestResult != FALSE) {
-		viewAlbum($db, $collectionID);
-	}
-	else {
-		viewPlaylist($db, $collectionID, $userID);
 	}
 }
 
@@ -109,15 +94,8 @@ function viewPlaylist($db, $playlistID, $userID) {
 
 	 			// other album info
 				print("<DIV class='row textRow'>\n");
+					// if we add social features, this can be replaced with link to user's page
 					print("Created by " . $playlistData["owner"] . "&nbsp;&bull;&nbsp;");
-
-					// if we add social features, the artist link can be replaced with link to user's page
-					
-					// foreach(array_keys($albumArtists) as $currArtistID) {
-					// 	$artistString = $artistString . "<a href=?op=artist&artid=$currArtistID> ".
-					// 		$albumArtists[$currArtistID] . "</a>,&nbsp;";
-					// }
-					// print(rtrim($artistString, ",&nbsp;") . "&nbsp;&bull; ");
 
 					// derive song count and album length
 					$numSongs = count($playlistSongs);
@@ -127,6 +105,8 @@ function viewPlaylist($db, $playlistID, $userID) {
 					}
 					print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
 						($runtime % 60) . " sec");
+					$editLink = "<a href=?op=editplaylist&pid=$playlistID>Edit Playlist</a>";
+					print("&nbsp;&bull;&nbsp;" . $editLink);
 				print("</DIV>\n");
 
 			print("</DIV>\n");
@@ -317,7 +297,15 @@ function viewPlaylistsPage($db, $userID) {
 		print("<DIV class='row headerRow'>");
 			print("<b>$userID's playlists</b>\n");
 		print("</DIV>\n");
-	showCreateTile();
+	
+		print("<DIV class='row'>");
+			showCreateTile();
+			$userPlaylists = getUserPlaylists($db, $userID);
+			for($i = 0; $i < sizeof($userPlaylists); $i++) {
+				showPlaylistTile($db, $userPlaylists[$i], FALSE);
+			}
+			
+		print("</DIV>\n");
 	print("</DIV>\n");
 }
 
@@ -334,6 +322,7 @@ function showCreateTile() {
 	print("</a>");
 }
 
+// draws an album tile: album art, name, (optionally) artists
 function showAlbumTile($db, $albumID, $showArtists) {
 	$albumData = getAlbumData($db, $albumID);
 	$artistsData = getArtistsFromMedia($db, $albumID, "A");
@@ -361,7 +350,8 @@ function showAlbumTile($db, $albumID, $showArtists) {
 	print("</a>");
 }
 
-function showPlaylistTile($db, $playlistID) {
+// draws a playlist tile: playlist art, name, (optionally) owner
+function showPlaylistTile($db, $playlistID, $showOwner) {
 	$playlistData = getPlaylistData($db, $playlistID);
 	$playlistArt = rand(1, 4);
 	$srcLink = "art/playlist/$playlistID.png";
@@ -370,7 +360,10 @@ function showPlaylistTile($db, $playlistID) {
 		print("<DIV class='tile'>\n");
 			print("<img src=$srcLink alt='$playlistName cover' " . 
 				"style='height:100%; width:100%; object-fit: cover'>");
-			$tileInfo = "<b>$playlistName</b> " . "<br>" . $playlistData["owner"];
+			$tileInfo = "<b>$playlistName</b>";
+			if ($showOwner == TRUE) {
+				$tileInfo = $tileInfo . "<br>" . $playlistData["owner"];
+			}
 			print("<p class='textRow' style='text-align: center'>\n$tileInfo</p>\n");
 		print("</DIV>\n");
 	print("</a>");
@@ -453,7 +446,7 @@ function viewArtist($db, $artistID) {
 	print("</DIV>\n");
 
 	print("<DIV class='scrollable-container'>\n");
-		print("<DIV class='scrollable-content' style='margin-top: 10px'>\n");
+		print("<DIV class='scrollable-content'>\n");
 		foreach($workedOnAlbums as $currAlbumID) {
 			showAlbumTile($db, $currAlbumID, FALSE);
 		}
@@ -470,9 +463,9 @@ function viewArtist($db, $artistID) {
 	$appearsInPlaylists = getAppearances($db, $artistID);
 
 	print("<DIV class='scrollable-container'>\n");
-		print("<DIV class='scrollable-content' style='margin-top: 10px'>\n");
+		print("<DIV class='scrollable-content'>\n");
 		foreach($appearsInPlaylists as $currPlaylistID) {
-			showPlaylistTile($db, $currPlaylistID);
+			showPlaylistTile($db, $currPlaylistID, TRUE);
 		}
 		print("</DIV>\n");
 	print("</DIV>\n");
@@ -491,7 +484,7 @@ function getAppearances($db, $artistID) {
 	$appearsInResult = $db->query($appearsInQuery);
 	if ($appearsInResult != FALSE) {
 		$appearsInPIDs = [];
-		foreach($appearsInResult->fetch() as $currPID) {
+		while($currPID = $appearsInResult->fetch()["pid"]) {
 			array_push($appearsInPIDs, $currPID);
 		}
 	}
@@ -499,6 +492,23 @@ function getAppearances($db, $artistID) {
 		print("ERROR WITH APPEARANCES QUERY" . $appearsInQuery);
 	}
 	return $appearsInPIDs;
+}
+
+// returns playlists owned by a given user
+function getUserPlaylists($db, $userID) {
+	$playlistsQuery = "SELECT pid FROM playlist WHERE owner = '$userID'";
+	$playlistsResult = $db->query($playlistsQuery);
+	if ($playlistsResult != FALSE) {
+		$userPlaylists = [];
+		while ($currPID = $playlistsResult->fetch()["pid"]) {
+			array_push($userPlaylists, $currPID);
+		}
+	}
+	else {
+		print("WEEWOO on $playlistsQuery");
+	}
+	return $userPlaylists;
+	
 }
 
 function showLandingPage() {
@@ -576,6 +586,14 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 			return TRUE;
 		}
 	}
+}
+
+function viewEditPlaylistPage($db, $userID, $playlistID) {
+
+}
+
+function processNewPlaylist($db) {
+
 }
 
 // view the main homepage of the site. 

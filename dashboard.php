@@ -130,8 +130,11 @@ switch($op) {
 					viewPlaylist($db, $_GET["pid"], $userID);
 					break;
 				case "newplaylist":
-					viewNewPlaylistPage($db, $userID);
+					// pass -1, will let function know starting new playlist
+					viewEditPlaylistPage($db, $userID, -1);
 					break;
+				case "editplaylist":
+					viewEditPlaylistPage($db, $userID, $_GET["pid"]);
 				case "uploadfm":
 					viewUploadForm($db, $userID);
 					break;
