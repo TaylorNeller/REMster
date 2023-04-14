@@ -69,6 +69,7 @@ function getPlaylistData($db, $playlistID) {
 	else {
 		// playlist doesn't exist, handle accordingly
 	}
+	return $playlistData;
 }
 
 function viewPlaylist($db, $playlistID, $userID) {
@@ -80,6 +81,78 @@ function viewPlaylist($db, $playlistID, $userID) {
 	}
 	// get songs with handy dandy method
 	$playlistSongs = getSongs($db, $playlistID, "P");
+
+
+	print("<DIV class='container contentContainer'>\n");
+
+		print("<DIV class='row'>");
+
+			print("<DIV class='col-md-3'>\n");
+
+				$playlistArt = rand(1, 4);
+
+				$srcLink = "art/playlist/$playlistArt.png";
+				$alttext = $playlistData["name"];
+				print("<img src=$srcLink alt='$alttext cover' " . 
+					"height='100%', width='100%'>");
+			print("</DIV>");
+
+			print("<DIV class='col-md-9 my-auto'>\n");
+
+				print("<DIV class='row textRow'>\n");
+					print("PLAYLIST");
+				print("</DIV>\n");
+
+				print("<DIV class='row headerRow'>\n");
+					print("<b>" . $playlistData["name"] . "</b>");
+				print("</DIV>\n");
+
+	 			// other album info
+				print("<DIV class='row textRow'>\n");
+					print("Created by " . $playlistData["owner"] . "&nbsp;&bull;&nbsp;");
+
+					// if we add social features, the artist link can be replaced with link to user's page
+					
+					// foreach(array_keys($albumArtists) as $currArtistID) {
+					// 	$artistString = $artistString . "<a href=?op=artist&artid=$currArtistID> ".
+					// 		$albumArtists[$currArtistID] . "</a>,&nbsp;";
+					// }
+					// print(rtrim($artistString, ",&nbsp;") . "&nbsp;&bull; ");
+
+					// derive song count and album length
+					$numSongs = count($playlistSongs);
+					$runtime = 0;
+					foreach ($playlistSongs as $currSong) {
+						$runtime += $currSong["duration"];
+					}
+					print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
+						($runtime % 60) . " sec");
+				print("</DIV>\n");
+
+			print("</DIV>\n");
+		print("</DIV>\n");
+
+	 	// thought: use javascript to handle liked songs
+		print("<DIV class='row'>\n");
+		$tableHeader = "<TABLE class='f_standardText' " . 
+			"width='100%' cellpadding='5' style='margin-top: 10px'>" .
+			"<TR>\n" .
+			"<TH>#</TH>\n" .
+			"<TH>Title</TH>\n" .
+			"<TH></TH>\n" .
+			"<TH>Length</TH>\n" .
+			"<TH></TH>\n" .
+			"</TR>\n";
+		print($tableHeader);
+
+	 	// shows songs in collection
+		showSongsList($playlistSongs);
+		print("</TABLE>\n</DIV>\n");
+
+		// spacer
+		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
+
+	print("</DIV>\n");
 
 
 }
@@ -220,7 +293,7 @@ function viewAlbum($db, $albumID) {
 			"<TR>\n" .
 			"<TH>#</TH>\n" .
 			"<TH>Title</TH>\n" .
-			"<TH>Liked</TH>\n" .
+			"<TH></TH>\n" .
 			"<TH>Length</TH>\n" .
 			"<TH></TH>\n" .
 			"</TR>\n";

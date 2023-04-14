@@ -121,8 +121,8 @@ switch($op) {
 				case "album":
 					viewAlbum($db, $_GET["aid"]);
 					break;
-				case "playlist":
-					viewPlaylist($db, $_GET["pid"], $userID);
+				case "playlists":
+					viewPlaylist($db, 1, $userID);
 					break;
 				case "uploadfm":
 					viewUploadForm($db, $userID);
