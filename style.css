@@ -125,6 +125,23 @@
 	color:#E8E9EC;
 }
 
+.playlistName {
+	color:#E8E9EC;
+	font-weight: bold;
+	background-color: #03080E;
+	border-style: hidden;
+	width: 80%;
+}
+
+.editPlaylistButtons {
+	margin-left: 10px; 
+	border-radius: 5px;
+	background-color: #151F29;
+	color: #E8E9EC;
+	border-radius: 5px;
+	height: 28px;
+}
+
 #song-heading {
 	margin-top: 1rem;
 	margin-bottom: -.5rem;

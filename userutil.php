@@ -39,6 +39,32 @@ function showSongsList($songsData) {
 	}
 }
 
+function showEditableSongsList($songsData) {
+	$trackNum = 1;
+	foreach($songsData as $currSong) {
+		print("<TR>\n");
+		$currSid = $currSong["sid"];
+		$currName = $currSong["name"];
+		$currArtist = $currSong["artists"];
+		$currDuration = $currSong["duration"];
+		print("<TD>$trackNum</TD>\n");
+
+
+		$artistString = "";
+		foreach(array_keys($currArtist) as $currArtistID) {
+			$artistString = $artistString . "<a href=?op=artist&artid=$currArtistID> ".
+				$currArtist[$currArtistID] . "</a>,&nbsp;";
+		}
+
+		print("<TD>$currName<br>" . rtrim($artistString, ",&nbsp;"). "</TD>\n");
+		print("<TD align='right'></TD>\n");
+		print("<TD>" . gmdate("i:s", $currDuration) . "</TD>\n");
+		print("<TD><INPUT type='checkbox' name='cbRemove[]' value=$currSid></TD>");
+		print("</TR>\n");
+		$trackNum++;
+	}
+}
+
 function getPlaylistData($db, $playlistID) {
 	$playlistQuery = "SELECT * " . 
 						"FROM playlist " . 
@@ -49,7 +75,7 @@ function getPlaylistData($db, $playlistID) {
 		$playlistData = [];
 		$playlistData["name"] = $target["pname"];
 		$playlistData["owner"] = $target["owner"];
-		$playlistData["public"] = $target["is_public"];
+		$playlistData["is_public"] = $target["is_public"];
 	}
 	else {
 		// playlist doesn't exist, handle accordingly
@@ -60,7 +86,7 @@ function getPlaylistData($db, $playlistID) {
 function viewPlaylist($db, $playlistID, $userID) {
 	// retrieve playlist metadata
 	$playlistData = getPlaylistData($db, $playlistID);
-	if ($playlistData["is_public"] == FALSE && $playlistData["owner"] != $userID) {
+	if ($playlistData["is_public"] == "F" && $playlistData["owner"] != $userID) {
 		// logged in user does not have access to this playlist
 		// send to error function
 	}
@@ -85,7 +111,13 @@ function viewPlaylist($db, $playlistID, $userID) {
 			print("<DIV class='col-md-9 my-auto'>\n");
 
 				print("<DIV class='row textRow'>\n");
-					print("PLAYLIST");
+				if ($playlistData["is_public"] == "T") {
+					print("PUBLIC PLAYLIST");
+				}
+				else {
+					print("PRIVATE PLAYLIST");
+				}
+					
 				print("</DIV>\n");
 
 				print("<DIV class='row headerRow'>\n");
@@ -113,21 +145,29 @@ function viewPlaylist($db, $playlistID, $userID) {
 		print("</DIV>\n");
 
 	 	// thought: use javascript to handle liked songs
-		print("<DIV class='row'>\n");
-		$tableHeader = "<TABLE class='f_standardText' " . 
-			"width='100%' cellpadding='5' style='margin-top: 10px'>" .
-			"<TR>\n" .
-			"<TH>#</TH>\n" .
-			"<TH>Title</TH>\n" .
-			"<TH></TH>\n" .
-			"<TH>Length</TH>\n" .
-			"<TH></TH>\n" .
-			"</TR>\n";
-		print($tableHeader);
+		if (sizeof($playlistSongs) == 0) {
+			print("<DIV class='row textRow' style='margin-top: 60px; font-size: 26px'>\n");
+			print("<p>This playlist has no songs! Add a song from the control bar.</p>");
+			print("</DIV>\n");
+		}
 
-	 	// shows songs in collection
-		showSongsList($playlistSongs);
-		print("</TABLE>\n</DIV>\n");
+		else {
+			print("<DIV class='row'>\n");
+			$tableHeader = "<TABLE class='f_standardText' " . 
+				"width='100%' cellpadding='5' style='margin-top: 10px'>" .
+				"<TR>\n" .
+				"<TH>#</TH>\n" .
+				"<TH>Title</TH>\n" .
+				"<TH></TH>\n" .
+				"<TH>Length</TH>\n" .
+				"<TH></TH>\n" .
+				"</TR>\n";
+			print($tableHeader);
+
+			// shows songs in collection
+			showSongsList($playlistSongs);
+			print("</TABLE>\n</DIV>\n");
+		}
 
 		// spacer
 		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
@@ -589,7 +629,143 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 }
 
 function viewEditPlaylistPage($db, $userID, $playlistID) {
+	if ($playlistID != -1) {
+		$playlistData = getPlaylistData($db, $playlistID);
+	}
+	print("<DIV class='container contentContainer'>\n");
+	print("<FORM name='fmEdit' method='POST' action='?op=submitedits&pid=$playlistID'>\n");
+		print("<DIV class='row'>");
 
+			print("<DIV class='col-md-3'>\n");
+				$srcLink = "art/playlist/1.png";
+				$alttext = $playlistData["name"];
+				print("<img src=$srcLink alt='$alttext cover' " . 
+					"height='100%', width='100%'>");
+			print("</DIV>");
+
+			print("<DIV class='col-md-9 my-auto'>\n");
+
+				print("<DIV class='row textRow'>\n");
+					print("EDITING");
+				print("</DIV>\n");
+				print("<DIV class='row headerRow'>\n");
+				if ($playlistID == -1) {
+					$tfValue = "click to edit";
+				}
+				else {
+					$tfValue = $playlistData["name"];
+				}
+				
+				print("<INPUT type='text' class='playlistName' name='pname' value='$tfValue'>");
+				print("</DIV>\n");
+
+
+	 			// submit changes button
+				print("<DIV class='row textRow' style='margin-top: 10px'>\n");
+					print("<INPUT class='editPlaylistButtons' type='submit' value='Save Changes'>&emsp;\n");
+					// only allow deletion if editing current playlist
+					if ($playlistID != -1) {
+						print("<p>Delete Playlist?&emsp;</p>");
+						print("<INPUT name='cbDelPlaylist' type='checkbox' value='T'>\n");
+					}
+				print("</DIV>\n");
+
+			print("</DIV>\n");
+		print("</DIV>\n");
+		
+		if ($playlistID != -1) {
+			print("<DIV class='row'>\n");
+			$tableHeader = "<TABLE class='f_standardText' " . 
+				"width='100%' cellpadding='5' style='margin-top: 10px'>" .
+				"<TR>\n" .
+				"<TH>#</TH>\n" .
+				"<TH>Title</TH>\n" .
+				"<TH></TH>\n" .
+				"<TH>Length</TH>\n" .
+				"<TH>Remove</TH>\n" .
+				"</TR>\n";
+			print($tableHeader);
+
+			$playlistSongs = getSongs($db, $playlistID, "P");
+			showEditableSongsList($playlistSongs);
+			print("</TABLE>\n</DIV>\n");
+		}
+
+		print("<DIV class='row f_standardText' style='height: 100px; margin-top: 20px'>");
+			print("Make public?<SELECT name='access' class='editPlaylistButtons'>\n");
+			print("<OPTION value='T'>Yes</OPTION>\n");
+			print("<OPTION value='F'>No</OPTION>\n</SELECT>\n");
+		print("</DIV>\n");
+		print("</FORM>\n");
+		// spacer
+		print("<DIV style='height: 200px; margin-top: 20px'></DIV>\n");
+
+	print("</DIV>\n");
+}
+
+function processEditPlaylist($db, $data, $playlistID, $userID) {
+	// extract data from POST var
+	$newName = $data["pname"];
+	$is_public = $data["access"];
+	$delete = $data["cbDelPlaylist"];
+
+	// if deleting playlist
+	if ($delete == "T") {
+		$deleteMetaQuery = "DELETE FROM playlist WHERE pid=$playlistID";
+		$deleteDataQuery = "DELETE FROM song_playlist WHERE pid=$playlistID";
+
+		$metaResult = $db->query($deleteMetaQuery);
+		$dataResult = $db->query($deleteDataQuery);
+		if ($metaResult == FALSE || $dataResult == FALSE) {
+			print("something wrong with " . $deleteMetaQuery . "or" . $deleteDataQuery);
+		}
+	}
+
+	// else if new playlist
+	else if ($playlistID != -1) {
+		$metaUpdateQuery = "UPDATE playlist SET pname='$newName', " . 
+					"is_public='$is_public' " . 
+		"WHERE pid=$playlistID";
+
+		$metaUpdateResult = $db->query($metaUpdateQuery);
+		if ($metaUpdateResult == FALSE) {
+			print("someting wrong with" . $metaUpdateQuery);
+			// handle error
+		}
+	}
+	
+	// if editing existing playlist
+	else {
+		$newPlaylistQuery = "INSERT INTO playlist (pname, owner, is_public) " . 
+							"VALUES ('$newName', '$userID', '$is_public')";
+		$newPlaylistResult = $db->query($newPlaylistQuery);
+		if ($newPlaylistResult == FALSE) {
+			print("something wrong with " . $newPlaylistQuery);
+		}
+	}
+
+	$songsToRemove = $data["cbRemove"];
+	$toRemoveString = "(". implode($songsToRemove, ", ") . ")";
+	// only do this if anything to remove
+	if (sizeof($songsToRemove) > 0) {
+		$removeQuery = "DELETE FROM song_playlist WHERE sid IN $toRemoveString";
+		$removeResult = $db->query($removeQuery);
+		if ($removeResult == FALSE) {
+			// handle error
+			print("something wrong with " . $removeQuery);
+		}
+	}
+
+	// if deleting playlist or creating new, go to overall playlist page
+	if ($delete == "T" || $playlistID == 1) {
+		viewPlaylistsPage($db, $userID);
+	}
+
+	// else editing playlist, redisplay playlist page
+	else {
+		viewPlaylist($db, $playlistID, $userID);
+	}
+	
 }
 
 function processNewPlaylist($db) {
