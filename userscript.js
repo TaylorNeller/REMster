@@ -1,4 +1,6 @@
 
+
+
 function toggleLike(sid) {
 
     event.preventDefault(); // prevent the form from being submitted
@@ -23,6 +25,11 @@ function toggleLike(sid) {
     }
 }
 
-function playSong(sid) {
-    alert(sid);
-}
+// function playSong(sid) {
+//     var srcLink = 'songs/' + sid + '.mp3';
+//     var sound = new Howl({
+//         src: [srcLink]
+//       });
+      
+//     sound.play();
+// }

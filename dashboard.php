@@ -41,6 +41,7 @@ switch($op) {
 	<link rel="stylesheet" href="style.css">
 	<script src="adminscript.js"></script> 
 	<script src="userscript.js"></script>
+	<script src="howler.js"></script>
 </HEAD>
 <BODY>
 <!--FULL OUTER SITE CONTAINER-->
@@ -167,6 +168,16 @@ switch($op) {
 		<button type="button" class="playerButton">
 		<img src="art/assets/play.png" class="buttonImage" alt="Play button" style="height: 50%">
 		</button>
+	<script>
+		function playSong(sid) {
+		var srcLink = 'songs/' + sid + '.mp3';
+		var sound = new Howl({
+			src: [srcLink]
+		});
+		
+		sound.play();
+	}
+	</script>
 
 	</DIV>
 </DIV>
