@@ -162,12 +162,13 @@ switch($op) {
 	</DIV>
 </DIV>
 <!--CONTROL DECK / PLAYER-->
-<DIV class="row player" style="position:fixed; bottom:0">
-	<p>testtesttesttesttesttesttesttesttesttesttesttest
-	testtesttesttesttesttesttesttesttesttesttesttesttest
-testtesttesttesttesttesttesttesttesttesttesttest<br>testtesttesttesttesttesttesttesttesttesttesttest
-	testtesttesttesttesttesttesttesttesttesttesttesttest
-testtesttesttesttesttesttesttesttesttesttesttest</p>
+<DIV class="player d-flex justify-content-center" style="position:fixed; bottom:0">
+	<DIV class="d-flex justify-content-center">
+		<button type="button" class="playerButton">
+		<img src="art/assets/play.png" class="buttonImage" alt="Play button" style="height: 50%">
+		</button>
+
+	</DIV>
 </DIV>
 </DIV>
 

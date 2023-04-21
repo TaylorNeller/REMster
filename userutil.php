@@ -18,7 +18,8 @@ function showSongsList($songsData) {
 		$currName = $currSong["name"];
 		$currArtist = $currSong["artists"];
 		$currDuration = $currSong["duration"];
-		print("<TD>$trackNum</TD>\n");
+		print("<TD><BUTTON type='button' class='tnum' value='$currSid' onclick='playSong(this.value)'>" . 
+			"$trackNum</DIV></TD>\n");
 
 
 		$artistString = "";
@@ -138,7 +139,9 @@ function viewPlaylist($db, $playlistID, $userID) {
 					print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
 						($runtime % 60) . " sec");
 					$editLink = "<a href=?op=editplaylist&pid=$playlistID>Edit Playlist</a>";
-					print("&nbsp;&bull;&nbsp;" . $editLink);
+					if ($userID == $playlistData["owner"]) {
+						print("&nbsp;&bull;&nbsp;" . $editLink);
+					}
 				print("</DIV>\n");
 
 			print("</DIV>\n");

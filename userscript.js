@@ -22,3 +22,7 @@ function toggleLike(sid) {
 
     }
 }
+
+function playSong(sid) {
+    alert(sid);
+}
