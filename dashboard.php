@@ -161,27 +161,43 @@ switch($op) {
 		}
 		?>
 	</DIV>
-</DIV>
-<!--CONTROL DECK / PLAYER-->
-<DIV class="player d-flex justify-content-center" style="position:fixed; bottom:0">
-	<DIV class="d-flex justify-content-center">
-		<button type="button" class="playerButton">
-		<img src="art/assets/play.png" class="buttonImage" alt="Play button" style="height: 50%">
-		</button>
-	<script>
-		function playSong(sid) {
-		var srcLink = 'songs/' + sid + '.mp3';
-		var sound = new Howl({
-			src: [srcLink]
-		});
-		
-		sound.play();
-	}
-	</script>
 
+<!--CONTROL DECK / PLAYER-->
+<DIV class="player container" style="position:fixed; bottom:0">
+<DIV class="row">
+	<DIV class="col-md-4">
+		<DIV id="nowPlaying"></DIV>
+	</DIV>
+	<DIV class="col-md-4 d-flex justify-content-center">
+		<DIV class="buttonBox">
+		<button type="button" class="playerButton">
+		<img src="art/assets/prev.png" class="buttonImage" alt="Previous song" style="height: 50%">
+		</button>
+		<button type="button" class="playerButton" onclick="playOrPause()">
+		<img src="art/assets/play.png" id="playButton" class="buttonImage" alt="Play button" style="height: 50%">
+		</button>
+		<button type="button" class="playerButton" onclick="playNext()">
+		<img src="art/assets/next.png" class="buttonImage" alt="Next song" style="height: 50%">
+		</button>
+	</DIV>
+	</DIV>
+	<DIV class="col-md-4">
+		<SELECT name='ddlAddtoPlaylist'>
+		<?php
+			$playlists = getUserPlaylists($db, $userID);
+		for ($i = 0; $i < sizeof($playlists); $i++) {
+			$currPid = $playlists[$i];
+			$pnameQuery = "SELECT pname FROM playlist WHERE pid=$currPid";
+			$currPname = $db->query($pnameQuery)->fetch()["pname"];
+			printf("<OPTION value='$currPid'>$currPname</OPTION>\n");
+		}
+		?>
+		</SELECT>
 	</DIV>
 </DIV>
 </DIV>
 
+</DIV>
+</DIV>
 </BODY>
 </HTML>

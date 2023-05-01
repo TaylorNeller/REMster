@@ -9,7 +9,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["like-id"] != FALSE) {
   }
 // INTERNAL ONLY function which takes array of song info
 // prints single song in the context of a list of songs
-function showSongsList($songsData) {
+function showSongsList($db, $songsData, $mediaID, $mediaType) {
 	// TODO: make clicking song name play song
 	$trackNum = 1;
 	foreach($songsData as $currSong) {
@@ -18,7 +18,33 @@ function showSongsList($songsData) {
 		$currName = $currSong["name"];
 		$currArtist = $currSong["artists"];
 		$currDuration = $currSong["duration"];
-		print("<TD><BUTTON type='button' class='tnum' value='$currSid' onclick='playSong(this.value)'>" . 
+
+		$currAid = getAlbumFromSong($db, $currSid);
+
+		$otherSongsRaw = [];
+		// need to get this to pass to JS for next/prev functionality
+		if ($mediaType == "A") {
+			$otherSongsRaw = getSongs($db, $mediaID, "A");
+		}
+		else if ($mediaType == "P") {
+			$otherSongsRaw = getSongs($db, $mediaID, "P");
+		}
+		$otherSongs = "";
+		foreach ($otherSongsRaw as $currOther) {
+			$currOtherAid = getAlbumFromSong($db, $currOther["sid"]);
+			$currOtherStr = $currOther["sid"] . "." . $currOtherAid . "." . 
+				$currOther ["name"] . "." . $currOther["duration"]  . ".";
+			foreach ($currOther["artists"] as $currOtherArtist) {
+				$currOtherStr = $currOtherStr . $currOtherArtist . ".";
+			}
+			$currOtherStr = substr_replace($currOtherStr, "/", -1);
+			$otherSongs = $otherSongs . $currOtherStr;
+		}
+
+		$jsArtists = '"' . implode('", "', $currArtist) . '"';
+		$jsData = $currSid . ", " . $currAid . ', "' . $currName. '", ' . $currDuration. ', ' . $otherSongs . ', ' . $jsArtists;
+
+		print("<TD><BUTTON type='button' class='tnum' value='$jsData' onclick='playNew(this.value)'>" . 
 			"$trackNum</DIV></TD>\n");
 
 
@@ -37,6 +63,17 @@ function showSongsList($songsData) {
 				. "<span class='heart-icon'></span></button></form></TD>\n");
 		print("</TR>\n");
 		$trackNum++;
+	}
+}
+
+function getAlbumFromSong($db, $sid) {
+	$AIDquery = "SELECT DISTINCT aid FROM song_album WHERE sid=$sid";
+	$AIDresult = $db->query($AIDquery);
+	if ($AIDresult != FALSE) {
+		return $AIDresult->fetch()["aid"];
+	}
+	else {
+		print($AIDquery);
 	}
 }
 
@@ -168,7 +205,7 @@ function viewPlaylist($db, $playlistID, $userID) {
 			print($tableHeader);
 
 			// shows songs in collection
-			showSongsList($playlistSongs);
+			showSongsList($db, $playlistSongs, $playlistID, "P");
 			print("</TABLE>\n</DIV>\n");
 		}
 
@@ -322,7 +359,7 @@ function viewAlbum($db, $albumID) {
 		print($tableHeader);
 
 	 	// shows songs in collection
-		showSongsList($albumSongs);
+		showSongsList($db, $albumSongs, $albumID, "A");
 		print("</TABLE>\n</DIV>\n");
 
 		print("<DIV class='row f_standardText' style='height: 100px; margin-top: 20px'><p>");
