@@ -106,7 +106,13 @@ function chooseNextSong(nextChoice) {
         index++;
     }
     else if (nextChoice == "P") {
-        index = Math.max(index - 1, 0);
+        console.log(playingHowl.seek());
+        if (playingHowl.seek() < 2) {
+            index = Math.max(index - 1, 0);
+        }
+        else {
+            index = index;
+        }
     }
     var nextSid = otherSids[index % (numSongs - 1)];
     var nextSong = otherSongsMap.get(nextSid);

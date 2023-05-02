@@ -63,6 +63,12 @@
 	padding-left: 10px;
 }
 
+hr.solid {
+	border-top: 2px solid #151F29;
+	border-radius: 1px;
+	width: 100%;
+  }
+
 .player {
 	background-color: #151F29;
 	color: #E8E9EC;

@@ -648,7 +648,7 @@ function getUserPlaylists($db, $userID) {
 
 function showLandingPage() {
 	// removed overflow to try to prevent scrollability
-	print("<DIV class='container contentContainer'>\n");
+	print("<DIV class='container contentContainer' style='overflow: hidden'>\n");
 		print("<DIV class='f_headerText' style='text-align: center; " . 
 			"width: 100%; margin-top: 50px'>\n");
 		print("<b>Welcome to REMster.<br>All music, no hassle.</b>\n");
@@ -659,9 +659,9 @@ function showLandingPage() {
 			print("<DIV class='col-md-6'>\n");
 				print("<p>Log in with your account...</p>");
 				print("<FORM name = 'fmLogin' method='POST' action='?op=login'>\n");
-				print("<INPUT class='loginTextBox' type='text' name='uname' size='12' placeholder='username' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='uname' size='16' placeholder='username' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass' size='12' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass' size='16' placeholder='password' />\n");
 				print("<br>");
 			 	print("<INPUT type='submit' value='login' style='margin-top: 20px'/>\n");
 				print("</FORM>\n");
@@ -670,13 +670,13 @@ function showLandingPage() {
 			print("<DIV class='col-md-6'>\n");
 				print("<p>Or create a new account.</p>");
 				print("<FORM name = 'fmRegister' method='POST' action='?op=register'>\n");
-				print("<INPUT class='loginTextBox' type='text' name='uname' size='12' placeholder='username' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='uname' size='16' placeholder='username' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='email' size='12' placeholder='email' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='email' size='16' placeholder='email' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass1' size='12' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass1' size='16' placeholder='password' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass2' size='12' placeholder='re-enter' />\n");
+				print("<INPUT class='loginTextBox' type='text' name='pass2' size='16' placeholder='re-enter' />\n");
 				print("<br>");
 			 	print("<INPUT type='submit' value='register' style='margin-top: 20px'/>\n");
 				print("</FORM>\n");
@@ -688,11 +688,11 @@ function showLandingPage() {
 function validateUser($db, $uname, $pass) {
 	// returns boolean
 	// add encryption!!!
-	$loginQuery = 	"SELECT * " . 
-					"FROM users ";
+	$loginQuery = 	"SELECT uname " . 
+					"FROM users " .
 					"WHERE uname='$uname' AND pass='$pass'";
 	$result = $db->query($loginQuery);
-	return $result;
+	return $result->fetch()["uname"] == "" ? FALSE : TRUE;
 }
 
 // unfinished, not fully working
@@ -704,23 +704,23 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 
 	else {
 		// this validation is not working
-		$validationQuery = 	"SELECT * " .
+		$validationQuery = 	"SELECT uname " .
 							"FROM users " .
-							"WHERE email=$email";
+							"WHERE email='$email'";
 		$validationResult = $db->query($validationQuery);
-		if ($validationResult != FALSE) {
+		if ($validationResult->fetch["uname"] != "") {
 			header("refresh:2;url=dashboard.php");
 			printf("A user with this email already exists.");
-			exit();
 		}
 
 		else {
 			$registerQuery = 	"INSERT INTO users " . 
-								"VALUES ($uname, $pass1, $email)";
+								"VALUES ('$uname', '$pass1', '$email')";
 			$registerResult = $db->query($registerQuery);
 			return TRUE;
 		}
 	}
+	return FALSE;
 }
 
 function viewEditPlaylistPage($db, $userID, $playlistID) {
@@ -900,6 +900,7 @@ function viewHomepage($db, $userID) {
 		print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
 		print("<p>Continue listening</p>\n");
 		print("</DIV>\n");
+		print("<DIV class='row'>\n");
 			print("<DIV class='scrollable-container'>\n");
 			print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
 			for($i = 0; $i < $maxIndex; $i++) {
@@ -952,7 +953,8 @@ function executeSearch($db, $query, $userID) {
 	while ($currArtid = $firstArtistResult->fetch()["artid"]) {
 		array_push($artistResultsData, $currArtid);
 	}
-	$firstPlaylistQuery = "SELECT pid FROM playlist WHERE pname='$query' OR pname LIKE('%$query%')";
+	$firstPlaylistQuery = "SELECT pid FROM playlist WHERE (pname='$query' OR pname LIKE('%$query%'))" . 
+	" AND (owner='$userID' OR is_public='T')";
 	$firstPlaylistResult = $db->query($firstPlaylistQuery);
 	while ($currPid = $firstPlaylistResult->fetch()["pid"]) {
 		array_push($playlistResultsData, $currPid);
@@ -976,7 +978,8 @@ function executeSearch($db, $query, $userID) {
 		while ($currArtid = $finalArtistResult->fetch()["artid"]) {
 			array_push($artistResultsData, $currArtid);
 		}
-		$finalPlaylistQuery = "SELECT pid FROM playlist WHERE SOUNDEX(pname) = SOUNDEX('$query')";
+		$finalPlaylistQuery = "SELECT pid FROM playlist WHERE SOUNDEX(pname) = SOUNDEX('$query')" . 
+		" AND (owner='$userID' OR is_public='T')";
 		$finalPlaylistResult = $db->query($finalPlaylistQuery);
 		while ($currPid = $finalPlaylistResult->fetch()["pid"]) {
 			array_push($playlistResultsData, $currPid);
@@ -986,12 +989,30 @@ function executeSearch($db, $query, $userID) {
 	$songResultsData = array_unique($songResultsData);
 	// add albums/playlists/artists where songs appear
 	$sidString = implode($songResultsData, ", ");
-	$suplAlbumQuery = "SELECT aid FROM song_album WHERE aid IN ()";
-	$finalPlaylistResult = $db->query($finalPlaylistQuery);
-	while ($currPid = $finalPlaylistResult->fetch()["pid"]) {
-		array_push($playlistResultsData, $currPid);
+	$suplAlbumQuery = "SELECT DISTINCT aid FROM song_album WHERE sid IN ($sidString)";
+	$suplAlbumResult = $db->query($suplAlbumQuery);
+	if ($suplAlbumResult != FALSE) {
+		while ($currAid = $suplAlbumResult->fetch()["aid"]) {
+			array_push($albumResultsData, $currAid);
+		}
 	}
-
+	
+	$suplArtistQuery = "SELECT DISTINCT artid FROM song_artist WHERE sid IN ($sidString)";
+	$suplArtistResult = $db->query($suplArtistQuery);
+	if ($suplArtistResult != FALSE) {
+		while ($currArtid = $suplArtistResult->fetch()["artid"]) {
+			array_push($artistResultsData, $currArtid);
+		}
+	}
+	
+	$suplPlaylistQuery = "SELECT DISTINCT pid FROM song_playlist WHERE sid IN ($sidString)" . 
+	" AND (owner='$userID' OR is_public='T')";
+	$suplPlaylistResult = $db->query($suplPlaylistQuery);
+	if ($suplPlaylistResult != FALSE) {
+		while ($currPid = $suplPlaylistResult->fetch()["pid"]) {
+			array_push($playlistResultsData, $currPid);
+		}
+	}
 
 	// clean results - remove dupes
 	$albumResultsData = array_unique($albumResultsData);
@@ -1011,63 +1032,104 @@ function viewResults($db, $data) {
 		print("<DIV class='row headerRow'>\n");
 			print("<p>Results</p>\n");
 		print("</DIV>\n");
-
-		print("<DIV class='row labelRow'>\n");
-		print("<b>Songs</b>");
-		print("</DIV>\n");
-		print("<DIV class='row'>\n");
-		$tableHeader = "<TABLE class='f_standardText' " . 
-			"width='50%' cellpadding='5' style='margin-top: 10px'>" .
-			"<TR>\n" .
-			"<TH>Title</TH>\n" .
-			"<TH>Album</TH>\n" .
-			"<TH></TH>\n" .
-			"<TH>Length</TH>\n" .
-			"<TH></TH>\n" .
-			"</TR>\n";
-		print($tableHeader);
-		showSongsResultList($db, $data[0]);
-		print("</TABLE>\n</DIV>\n");
-
-		print("<DIV class='row labelRow'>\n");
-		print("<b>Albums</b>");
-		print("</DIV>\n");
-		print("<DIV class='row'>\n");
-			print("<DIV class='scrollable-container'>\n");
-			print("<DIV class='scrollable-content'>\n");
-			foreach($data[1] as $currAid) {
-				showAlbumTile($db, $currAid, TRUE);
+		if (sizeof($data[0]) == 0 && sizeof($data[1]) == 0 &&
+			sizeof($data[2]) == 0 && sizeof($data[3]) == 0) {
+			print("<DIV class='row labelRow'>\n");
+			print("<b>Your search had no results. Please check spelling and try again!</b>");
+			print("</DIV>\n");
+		}
+		else {
+			print("<DIV class='row labelRow'>\n");
+			print("<b>Songs</b>");
+			print("</DIV>\n");
+			if (sizeof($data[0]) == 0) {
+				print("<DIV class='row labelRow' style='font-size:20px'>\n");
+				print("No song results");
+				print("</DIV>\n");
 			}
-			print("</DIV>\n");
-			print("</DIV>\n");
-		print("</DIV>\n");
-
-		print("<DIV class='row labelRow'>\n");
-		print("<b>Artists</b>");
-		print("</DIV>\n");
-		print("<DIV class='row'>\n");
-			print("<DIV class='scrollable-container'>\n");
-			print("<DIV class='scrollable-content'>\n");
-			foreach($data[2] as $currArtid) {
-				showArtistTile($db, $currArtid);
+			else {
+			print("<DIV class='row'>\n");
+			$tableHeader = "<TABLE class='f_standardText' " . 
+				"width='70%' cellpadding='5' style='margin-top: 10px'>" .
+				"<TR>\n" .
+				"<TH>Title</TH>\n" .
+				"<TH>Album</TH>\n" .
+				"<TH></TH>\n" .
+				"<TH>Length</TH>\n" .
+				"<TH></TH>\n" .
+				"</TR>\n";
+			print($tableHeader);
+			showSongsResultList($db, $data[0]);
+			print("</TABLE>\n</DIV>\n");
 			}
-			print("</DIV>\n");
-			print("</DIV>\n");
-		print("</DIV>\n");
+			print("<hr class='solid'>");
 
-		print("<DIV class='row labelRow'>\n");
-		print("<b>Playlists</b>");
-		print("</DIV>\n");
-		print("<DIV class='row'>\n");
-			print("<DIV class='scrollable-container'>\n");
-			print("<DIV class='scrollable-content'>\n");
-			foreach($data[3] as $currPid) {
-				showPlaylistTile($db, $currPid, TRUE);
+			print("<DIV class='row labelRow'>\n");
+			print("<b>Albums</b>");
+			print("</DIV>\n");
+			if (sizeof($data[1]) == 0) {
+				print("<DIV class='row labelRow' style='font-size:20px'>\n");
+				print("No album results");
+				print("</DIV>\n");
 			}
-			print("</DIV>\n");
-			print("</DIV>\n");
-		print("</DIV>\n");
+			else {
+				print("<DIV class='row'>\n");
+					print("<DIV class='scrollable-container'>\n");
+					print("<DIV class='scrollable-content'>\n");
+					foreach($data[1] as $currAid) {
+						showAlbumTile($db, $currAid, TRUE);
+					}
+					print("</DIV>\n");
+					print("</DIV>\n");
+				print("</DIV>\n");
+			}
 
+			print("<hr class='solid'>");
+
+			print("<DIV class='row labelRow'>\n");
+			print("<b>Artists</b>");
+			print("</DIV>\n");
+			if (sizeof($data[2]) == 0) {
+				print("<DIV class='row labelRow' style='font-size:20px'>\n");
+				print("No artist results");
+				print("</DIV>\n");
+			}
+			else {
+				print("<DIV class='row'>\n");
+					print("<DIV class='scrollable-container'>\n");
+					print("<DIV class='scrollable-content'>\n");
+					foreach($data[2] as $currArtid) {
+						showArtistTile($db, $currArtid);
+					}
+					print("</DIV>\n");
+					print("</DIV>\n");
+				print("</DIV>\n");
+			}
+
+			print("<hr class='solid'>");
+
+			print("<DIV class='row labelRow'>\n");
+			print("<b>Playlists</b>");
+			print("</DIV>\n");
+			if (sizeof($data[3]) == 0) {
+				print("<DIV class='row labelRow' style='font-size:20px'>\n");
+				print("No playlist results");
+				print("</DIV>\n");
+			}
+			else {
+				print("<DIV class='row'>\n");
+					print("<DIV class='scrollable-container'>\n");
+					print("<DIV class='scrollable-content'>\n");
+					foreach($data[3] as $currPid) {
+						showPlaylistTile($db, $currPid, TRUE);
+					}
+					print("</DIV>\n");
+					print("</DIV>\n");
+				print("</DIV>\n");
+			}	
+		}
+		// spacer
+		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
 	print("</DIV>\n");
 }	
 
@@ -1096,7 +1158,4 @@ function show404($errorSource) {
 	print("</DIV>\n");
 	header("refresh:2;url=dashboard.php?op=home");
 }
-
-
-
 ?>

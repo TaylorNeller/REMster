@@ -110,6 +110,7 @@ switch($op) {
 			$userID = $_SESSION["uname"];
 			switch ($op) {
 				case "login":
+				case "register":
 				case "home":
 					viewHomepage($db, $userID);
 					break;
