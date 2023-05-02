@@ -26,65 +26,110 @@ function toggleLike(sid) {
 }
 
 // following code handles all song playback functionality.
+// howl object for current song.
 var playingHowl = null;
 
 // 0: sid
 // 1: aid (for cover art)
 // 2: name
 // 3: duration
-// 4: other songs in collection
-// 5+: artists
-var currSong = null;
+// 4+: artists
+var currentSongData = null;
 
-var otherMap = null;
+// maps SIDs to the rest of the information about that song, for each in a collection.
+var otherSongsMap = null;
+
+// globals controlling shuffling / repeating.
+var shuffling = false;
+var repeating = false;
 
 // called when playing a song from a new collection. Updates all global info.
-function playNew(songData) {
+function loadNewData(jsData) {
+    otherSongsMap = new Map();
+    currentSongData = jsData.split(", ");
+    var otherSongs = currentSongData[4].split("/");
+    otherSongs.splice(otherSongs.length - 1, 1);
+    currentSongData.splice(4, 1);
+    for (var i = 0; i < otherSongs.length; i++) {
+        var currOther = otherSongs[i].split(".");
+        otherSongsMap.set(currOther[0], currOther);
+    }
+    playSong();
+}
+
+// called after new data loaded or new song chosen. Plays the given song, and updates relevent info.
+function playSong() {
+    sid = currentSongData[0];
     if (playingHowl != null) {
         playingHowl.unload();
     }
-    otherMap = new Map();
-    currSong = songData.split(", ");
-    var otherSongs = currSong[4].split("/");
-    for (var i = 0; i < otherSongs.length; i++) {
-        var currOther = otherSongs[i].split(".");
-        otherMap.set(currOther[0], currOther);
-    }
-    var srcLink = 'songs/' + songData[0] + '.mp3';
+    var srcLink = 'songs/' + sid + '.mp3';
     playingHowl = new Howl({
         src: [srcLink]
       });
-    
     playingHowl.play();
-    document.getElementById("playButton").src= "art/assets/pause.png";
-    showNowPlayingInfo(currSong);
+    playingHowl.on("end", function() {chooseNextSong("N");});
+    document.getElementById("playButton").src = "art/assets/pause.png";
+    document.getElementById("passSid").value = sid;
+    document.getElementById("submitAdd").disabled = false;
+    showNowPlayingInfo(currentSongData);
 }
 
+// chooses the next song based on the current options.
+function chooseNextSong(nextChoice) {
+    var currSid = currentSongData[0];
+
+    var otherSids = Array.from(otherSongsMap.keys());
+    var numSongs = otherSids.length;
+    var index = otherSids.indexOf(currSid);
+    if (repeating) {
+        index = index;
+    }
+    else if (shuffling) {
+        index = parseInt(Math.random() * (numSongs - 1));
+    }
+    
+    else if (nextChoice == "N") {
+        index++;
+    }
+    else if (nextChoice == "P") {
+        index = Math.max(index - 1, 0);
+    }
+    var nextSid = otherSids[index % (numSongs - 1)];
+    var nextSong = otherSongsMap.get(nextSid);
+    currentSongData = nextSong;
+    playSong();
+}
+
+// displays the "now playing" info in the bottom-left.
 function showNowPlayingInfo(songData) {
     const currSid = songData[0];
     const currAid = songData[1];
     const currName = songData[2].replaceAll('"', "");
     var currArtists = "";
-    for(var i = 5; i < songData.length; i++) {
+    for(var i = 4; i < songData.length; i++) {
         currArtists += songData[i] + ", ";
     }
     currArtists = currArtists.replaceAll('"', "");
+    currArtists = currArtists.substring(0, currArtists.length - 2);
     var returnString = "";
-    returnString += "<DIV class='row'>";
-    returnString += "<DIV class='col-md-2 playingInfoCover'>\n";
+    returnString += "<DIV class='row align-items-center'>";
+    returnString += "<DIV class='col-md-3 playingInfoCover'>\n";
     returnString += "<img src='art/cover/" + currAid + ".png' alt='current album cover' " + 
 				"class='playingInfoCover'>";
     returnString += "</DIV>\n";
-    returnString += "<DIV class='col-md-10'>\n";
+    returnString += "<DIV class='col-md-9'>\n";
     returnString += "<DIV class='row textRow'>" + currName + "</DIV>";
     returnString += "<DIV class='row textRow'>" + currArtists + "</DIV>";
     returnString += "</DIV>\n";
     returnString += "</DIV>\n";
     var newBox = document.createElement("div");
+    newBox.id = "nowPlaying";
     newBox.innerHTML = returnString;
     document.getElementById("nowPlaying").replaceWith(newBox);
 }
 
+// handles pausing / playing and updates buttons.
 function playOrPause() {
     if (playingHowl != null) {
         if (playingHowl.playing()) {
@@ -98,16 +143,27 @@ function playOrPause() {
     }
 }
 
-function getNext() {
-    var currSid = currSong[0];
-    var otherSids = Array.from(otherMap.keys());
-    var nextSid = otherSids[(otherSids.indexOf(currSid) + 1)];
-    var nextSong = otherMap.get(nextSid);
-    playNext(nextSong);
+// toggles shuffle.
+function toggleShuffle() {
+    if (shuffling) {
+        shuffling = false;
+        document.getElementById("shflimg").src= "art/assets/shuffle.png";
+    }
+    else {
+        shuffling = true;
+        document.getElementById("shflimg").src= "art/assets/shuffleon.png";
+    }
+    
 }
 
-function playNext() {
-    if (playingHowl != null) {
-        var nextSong = getNext()
+// toggles repeat.
+function toggleRepeat() {
+    if (repeating) {
+        repeating = false;
+        document.getElementById("rptimg").src= "art/assets/repeat.png";
     }
+    else {
+        repeating = true;
+        document.getElementById("rptimg").src= "art/assets/repeaton.png";
+    }    
 }

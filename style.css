@@ -73,6 +73,13 @@
 	aspect-ratio: 1 / 1;
 }
 
+.controlButton {
+	max-height: 70%;
+	border: none;
+    background-color: transparent;
+	aspect-ratio: 1 / 1;
+}
+
 .buttonImage {
 	aspect-ratio: 1 / 1;
 }
@@ -103,6 +110,13 @@
 
 .buttonBox {
 	height: 80px;
+}
+
+.addTo {
+	color: #E8E9EC;
+	background-color: #151F29;
+	height: 32px;
+	border-radius: 5px;
 }
 
 .scrollable-container {
