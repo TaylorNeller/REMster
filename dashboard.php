@@ -114,7 +114,10 @@ switch($op) {
 					viewHomepage($db, $userID);
 					break;
 				case "search":
-					viewArtist($db, "1");
+					viewSearch($db);
+					break;
+				case "searchfor":
+					executeSearch($db, $_GET["query"], $userID);
 					break;
 				case "artist":
 					viewArtist($db, $_GET["artid"]);

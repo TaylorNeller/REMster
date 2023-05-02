@@ -66,6 +66,47 @@ function showSongsList($db, $songsData, $mediaID, $mediaType) {
 	}
 }
 
+function showSongsResultList($db, $songSIDs) {
+	$sidString = implode($songSIDs, ", ");
+	$metaQuery = "SELECT * FROM song WHERE sid IN ($sidString)";
+	$metaResult = $db->query($metaQuery);
+	if ($metaResult == FALSE) {
+		print($metaQuery);
+	}
+
+	$trackNum = 1;
+	while(($currSong = $metaResult->fetch()) && $trackNum <= 5) {
+		print("<TR>\n");
+		$currSid = $currSong["sid"];
+		$currName = $currSong["sname"];
+		$currDuration = $currSong["duration"];
+		$currArtist = getArtistsFromMedia($db, $currSid, "S");
+		$currAid = getAlbumFromSong($db, $currSid);
+
+		$anameQuery = "SELECT aname FROM album WHERE aid=$currAid";
+		$anameResult = $db->query($anameQuery);
+		$anameValue = $anameResult->fetch()["aname"];
+
+		$artistString = "";
+		foreach(array_keys($currArtist) as $currArtistID) {
+			$artistString = $artistString . "<a href=?op=artist&artid=$currArtistID> ".
+				$currArtist[$currArtistID] . "</a>,&nbsp;";
+		}
+
+		$anameString ="<a href=?op=album&aid=$currAid>$anameValue</a>";
+		print("<TD>$currName<br>" . rtrim($artistString, ",&nbsp;"). "</TD>\n");
+		print("<TD>$anameString</TD>\n");
+		print("<TD align='right'></TD>\n");
+		print("<TD>" . gmdate("i:s", $currDuration) . "</TD>\n");
+		print("<TD><form method='POST'>"
+			. "<input type='hidden' name='like-id' value='$currSid'/>"
+			. "<button type='submit' id='like-$currSid' class='like-btn' onclick='toggleLike($currSid)'>"
+			. "<span class='heart-icon'></span></button></form></TD>\n");
+		print("</TR>\n");
+		$trackNum++;
+	}
+}
+
 function getAlbumFromSong($db, $sid) {
 	$AIDquery = "SELECT DISTINCT aid FROM song_album WHERE sid=$sid";
 	$AIDresult = $db->query($AIDquery);
@@ -444,6 +485,20 @@ function showPlaylistTile($db, $playlistID, $showOwner) {
 			if ($showOwner == TRUE) {
 				$tileInfo = $tileInfo . "<br>" . $playlistData["owner"];
 			}
+			print("<p class='textRow' style='text-align: center'>\n$tileInfo</p>\n");
+		print("</DIV>\n");
+	print("</a>");
+}
+
+function showArtistTile($db, $artistID) {
+	$artistData = getArtist($db, $artistID);
+	$srcLink = "art/profile/$artistID.png";
+	$artistName = $artistData["name"];
+	print("<a href='?op=artist&artid=$artistID'>");
+		print("<DIV class='tile'>\n");
+			print("<img src=$srcLink alt='$artistName profile photo' " . 
+				"style='height:100%; width:100%; object-fit: cover'>");
+			$tileInfo = "<b>$artistName</b>";
 			print("<p class='textRow' style='text-align: center'>\n$tileInfo</p>\n");
 		print("</DIV>\n");
 	print("</a>");
@@ -828,10 +883,10 @@ function addToPlaylist($db, $data, $userID) {
 }
 
 // view the main homepage of the site. 
-// for some reason this gets rid of the control bar at the bottom.
+// for some reason this shifts the control bar over slightly.
 function viewHomepage($db, $userID) {
 	print("<DIV class='container contentContainer'>\n");
-		print("<DIV class='headerRow'>\n");
+		print("<DIV class='row headerRow'>\n");
 		print("<p>Welcome back, <b>$userID.</b></p>\n");
 		print("</DIV>\n");
 
@@ -856,6 +911,165 @@ function viewHomepage($db, $userID) {
 		print("</DIV>\n");
 	print("</DIV>\n");
 }
+
+// view the search page of the site.
+function viewSearch($db) {
+	print("<DIV class='container-fluid contentContainer'>\n");
+		print("<DIV class='row headerRow'>\n");
+			print("<p>Search</p>\n");
+		print("</DIV>\n");
+		print("<DIV class='row d-flex'>\n");
+		print("<FORM name='fmSearch' method='GET'>\n");
+			print("<INPUT name='op' type='hidden' value='searchfor'></INPUT>");
+			print("<INPUT name='query' class='f_standardText searchBox' type='textbox'></INPUT>");
+			print("<INPUT name='sendsearch' class='f_standardText searchButton' type='submit' value='GO'></INPUT>");
+		print("</FORM>\n");
+		print("</DIV>\n");
+	print("</DIV>\n");
+}
+// executes search in three stages, zooming-out in terms of granularity.
+// searches through artists, albums, songs, and playlists (if public or owner is user)
+function executeSearch($db, $query, $userID) {
+	// arrays for results. Only search by soundex if no results up to that point (arrays empty).
+	$songResultsData = [];
+	$albumResultsData = [];
+	$artistResultsData = [];
+	$playlistResultsData = [];
+
+	// 1. search for the string directly, or things LIKE the string
+	$firstSongQuery = "SELECT sid FROM song WHERE sname='$query' OR sname LIKE('%$query%')";
+	$firstSongResult = $db->query($firstSongQuery);
+	while ($currSid = $firstSongResult->fetch()["sid"]) {
+		array_push($songResultsData, $currSid);
+	}
+	$firstAlbumQuery = "SELECT aid FROM album WHERE aname='$query' OR aname LIKE('%$query%')";
+	$firstAlbumResult = $db->query($firstAlbumQuery);
+	while ($currAid = $firstAlbumResult->fetch()["aid"]) {
+		array_push($albumResultsData, $currAid);
+	}
+	$firstArtistQuery = "SELECT artid FROM artist WHERE artname='$query' OR artname LIKE ('%$query%')";
+	$firstArtistResult = $db->query($firstArtistQuery);
+	while ($currArtid = $firstArtistResult->fetch()["artid"]) {
+		array_push($artistResultsData, $currArtid);
+	}
+	$firstPlaylistQuery = "SELECT pid FROM playlist WHERE pname='$query' OR pname LIKE('%$query%')";
+	$firstPlaylistResult = $db->query($firstPlaylistQuery);
+	while ($currPid = $firstPlaylistResult->fetch()["pid"]) {
+		array_push($playlistResultsData, $currPid);
+	}
+
+	// 2. if no results so far, search for the soundex of the string
+	if (sizeof($songResultsData) == 0 && sizeof($albumResultsData) == 0 &&
+		sizeof($artistResultsData) == 0 && sizeof($playlistResultsData) == 0) {
+		$finalSongQuery = "SELECT sid FROM song WHERE SOUNDEX(sname) = SOUNDEX('$query')";
+		$finalSongResult = $db->query($finalSongQuery);
+		while ($currSid = $finalSongResult->fetch()["sid"]) {
+			array_push($songResultsData, $currSid);
+		}
+		$finalAlbumQuery = "SELECT aid FROM album WHERE SOUNDEX(aname) = SOUNDEX('$query')";
+		$finalAlbumResult = $db->query($finalAlbumQuery);
+		while ($currAid = $finalAlbumResult->fetch()["aid"]) {
+			array_push($albumResultsData, $currAid);
+		}
+		$finalArtistQuery = "SELECT artid FROM artist WHERE SOUNDEX(artname) = SOUNDEX('$query')";
+		$finalArtistResult = $db->query($finalArtistQuery);
+		while ($currArtid = $finalArtistResult->fetch()["artid"]) {
+			array_push($artistResultsData, $currArtid);
+		}
+		$finalPlaylistQuery = "SELECT pid FROM playlist WHERE SOUNDEX(pname) = SOUNDEX('$query')";
+		$finalPlaylistResult = $db->query($finalPlaylistQuery);
+		while ($currPid = $finalPlaylistResult->fetch()["pid"]) {
+			array_push($playlistResultsData, $currPid);
+		}
+	}
+
+	$songResultsData = array_unique($songResultsData);
+	// add albums/playlists/artists where songs appear
+	$sidString = implode($songResultsData, ", ");
+	$suplAlbumQuery = "SELECT aid FROM song_album WHERE aid IN ()";
+	$finalPlaylistResult = $db->query($finalPlaylistQuery);
+	while ($currPid = $finalPlaylistResult->fetch()["pid"]) {
+		array_push($playlistResultsData, $currPid);
+	}
+
+
+	// clean results - remove dupes
+	$albumResultsData = array_unique($albumResultsData);
+	$artistResultsData = array_unique($artistResultsData);
+	$playlistResultsData = array_unique($playlistResultsData);
+
+	$totalData = [];
+	array_push($totalData, $songResultsData);
+	array_push($totalData, $albumResultsData);
+	array_push($totalData, $artistResultsData);
+	array_push($totalData, $playlistResultsData);
+	viewResults($db, $totalData);
+}
+
+function viewResults($db, $data) {
+	print("<DIV class='container-fluid contentContainer'>\n");
+		print("<DIV class='row headerRow'>\n");
+			print("<p>Results</p>\n");
+		print("</DIV>\n");
+
+		print("<DIV class='row labelRow'>\n");
+		print("<b>Songs</b>");
+		print("</DIV>\n");
+		print("<DIV class='row'>\n");
+		$tableHeader = "<TABLE class='f_standardText' " . 
+			"width='50%' cellpadding='5' style='margin-top: 10px'>" .
+			"<TR>\n" .
+			"<TH>Title</TH>\n" .
+			"<TH>Album</TH>\n" .
+			"<TH></TH>\n" .
+			"<TH>Length</TH>\n" .
+			"<TH></TH>\n" .
+			"</TR>\n";
+		print($tableHeader);
+		showSongsResultList($db, $data[0]);
+		print("</TABLE>\n</DIV>\n");
+
+		print("<DIV class='row labelRow'>\n");
+		print("<b>Albums</b>");
+		print("</DIV>\n");
+		print("<DIV class='row'>\n");
+			print("<DIV class='scrollable-container'>\n");
+			print("<DIV class='scrollable-content'>\n");
+			foreach($data[1] as $currAid) {
+				showAlbumTile($db, $currAid, TRUE);
+			}
+			print("</DIV>\n");
+			print("</DIV>\n");
+		print("</DIV>\n");
+
+		print("<DIV class='row labelRow'>\n");
+		print("<b>Artists</b>");
+		print("</DIV>\n");
+		print("<DIV class='row'>\n");
+			print("<DIV class='scrollable-container'>\n");
+			print("<DIV class='scrollable-content'>\n");
+			foreach($data[2] as $currArtid) {
+				showArtistTile($db, $currArtid);
+			}
+			print("</DIV>\n");
+			print("</DIV>\n");
+		print("</DIV>\n");
+
+		print("<DIV class='row labelRow'>\n");
+		print("<b>Playlists</b>");
+		print("</DIV>\n");
+		print("<DIV class='row'>\n");
+			print("<DIV class='scrollable-container'>\n");
+			print("<DIV class='scrollable-content'>\n");
+			foreach($data[3] as $currPid) {
+				showPlaylistTile($db, $currPid, TRUE);
+			}
+			print("</DIV>\n");
+			print("</DIV>\n");
+		print("</DIV>\n");
+
+	print("</DIV>\n");
+}	
 
 
 // display an error page when going to an unknown artist, album, or playlist.

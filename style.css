@@ -49,6 +49,13 @@
 	padding-left: 10px;
 }
 
+.labelRow {
+	color: #E8E9EC;
+	font-family: "Gill Sans", sans-serif;
+	font-size: 30px;
+	padding-left: 10px;
+}
+
 .textRow {
 	color: #E8E9EC;
 	font-family: "Gill Sans", sans-serif;
@@ -114,7 +121,23 @@
     background-color: #151F29;
 }
 
+.searchBox {
+	background-color: #151F29;
+	color: #E8E9EC;
+	border-radius: 5px;
+	font-size: 42px;
+	height: 100px;
+	width: 100%;
+}
 
+.searchButton {
+	background-color: #151F29;
+	color: #E8E9EC;
+	border-radius: 5px;
+	font-size: 42px;
+	height: 100px;
+	width: 20%;
+}
 
 .loginTextBox {
 	background-color: #151F29;
