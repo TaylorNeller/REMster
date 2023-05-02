@@ -139,8 +139,8 @@ switch($op) {
 				case "submitedits":
 					processEditPlaylist($db, $_POST, $_GET["pid"], $userID);
 					break;
-				case "submitnew":
-					processNewPlaylist($db, $_POST);
+				case "addto": 
+					addToPlaylist($db, $_POST, $userID);
 					break;
 				case "uploadfm":
 					viewUploadForm($db, $userID);
@@ -163,26 +163,42 @@ switch($op) {
 	</DIV>
 
 <!--CONTROL DECK / PLAYER-->
-<DIV class="player container" style="position:fixed; bottom:0">
+<DIV class="player container-fluid" style="position:fixed; bottom:0">
 <DIV class="row">
-	<DIV class="col-md-4">
+	<DIV class="col-md-3">
 		<DIV id="nowPlaying"></DIV>
+	</DIV>
+	<DIV class="col-md-1">
+	<DIV class="buttonBox d-flex align-items-center justify-content-between">
+		<button type="button" class="controlButton" onclick="toggleShuffle()">
+		<img src="art/assets/shuffle.png" id="shflimg" class="buttonImage" alt="Shuffle songs" style="height: 50%">
+		</button>
+		<button type="button" class="controlButton" onclick="toggleRepeat()">
+		<img src="art/assets/repeat.png" id="rptimg" class="buttonImage" alt="Repeat songs" style="height: 50%">
+		</button>
+	</DIV>
 	</DIV>
 	<DIV class="col-md-4 d-flex justify-content-center">
 		<DIV class="buttonBox">
-		<button type="button" class="playerButton">
+		<button type="button" class="playerButton" onclick="chooseNextSong('P')">
 		<img src="art/assets/prev.png" class="buttonImage" alt="Previous song" style="height: 50%">
 		</button>
 		<button type="button" class="playerButton" onclick="playOrPause()">
 		<img src="art/assets/play.png" id="playButton" class="buttonImage" alt="Play button" style="height: 50%">
 		</button>
-		<button type="button" class="playerButton" onclick="playNext()">
+		<button type="button" class="playerButton" onclick="chooseNextSong('N')">
 		<img src="art/assets/next.png" class="buttonImage" alt="Next song" style="height: 50%">
 		</button>
 	</DIV>
 	</DIV>
-	<DIV class="col-md-4">
-		<SELECT name='ddlAddtoPlaylist'>
+	<DIV class="col-md-1">
+		<!-- maybe a volume slider? or a like button? -->
+	</DIV>
+	<DIV class="col-md-3 d-flex align-items-end justify-content-end">
+		<FORM name='fmAddTo' method='POST' action='?op=addto'>
+		<p class="f_standardText">Add Current Song To:</p>
+		<INPUT type="hidden" id="passSid" name="sid" value=""/>
+		<SELECT name='ddlAddtoPlaylist' class="addTo f_standardText">
 		<?php
 			$playlists = getUserPlaylists($db, $userID);
 		for ($i = 0; $i < sizeof($playlists); $i++) {
@@ -193,6 +209,8 @@ switch($op) {
 		}
 		?>
 		</SELECT>
+		<INPUT type="submit" value="Confirm" id="submitAdd" class="addTo f_standardText" disabled/>
+		</FORM>
 	</DIV>
 </DIV>
 </DIV>

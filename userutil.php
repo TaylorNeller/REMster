@@ -41,10 +41,10 @@ function showSongsList($db, $songsData, $mediaID, $mediaType) {
 			$otherSongs = $otherSongs . $currOtherStr;
 		}
 
-		$jsArtists = '"' . implode('", "', $currArtist) . '"';
-		$jsData = $currSid . ", " . $currAid . ', "' . $currName. '", ' . $currDuration. ', ' . $otherSongs . ', ' . $jsArtists;
+		$jsArtists = implode(', ', $currArtist);
+		$jsData = $currSid . ", " . $currAid . ', ' . $currName. ', ' . $currDuration. ', ' . $otherSongs . ', ' . $jsArtists;
 
-		print("<TD><BUTTON type='button' class='tnum' value='$jsData' onclick='playNew(this.value)'>" . 
+		print("<TD><BUTTON type='button' class='tnum' value='$jsData' onclick='loadNewData(this.value)'>" . 
 			"$trackNum</DIV></TD>\n");
 
 
@@ -434,7 +434,7 @@ function showAlbumTile($db, $albumID, $showArtists) {
 function showPlaylistTile($db, $playlistID, $showOwner) {
 	$playlistData = getPlaylistData($db, $playlistID);
 	$playlistArt = rand(1, 4);
-	$srcLink = "art/playlist/$playlistID.png";
+	$srcLink = "art/playlist/$playlistArt.png";
 	$playlistName = $playlistData["name"];
 	print("<a href='?op=playlist&pid=$playlistID'>");
 		print("<DIV class='tile'>\n");
@@ -797,7 +797,7 @@ function processEditPlaylist($db, $data, $playlistID, $userID) {
 	}
 
 	// if deleting playlist or creating new, go to overall playlist page
-	if ($delete == "T" || $playlistID == 1) {
+	if ($delete == "T" || $playlistID == -1) {
 		viewPlaylistsPage($db, $userID);
 	}
 
@@ -808,8 +808,23 @@ function processEditPlaylist($db, $data, $playlistID, $userID) {
 	
 }
 
-function processNewPlaylist($db) {
+function addToPlaylist($db, $data, $userID) {
+	$sid = $data["sid"];
+	$pid = $data["ddlAddtoPlaylist"];
 
+	$playlistQuery = "SELECT * FROM playlist WHERE pid=$pid";
+	$playlistResult = $db->query($playlistQuery)->fetch();
+	if ($playlistResult["owner"] != $userID) {
+		// handle
+	}
+	else {
+		$updateQuery = "INSERT INTO song_playlist VALUE($sid, $pid)";
+		$updateResult = $db->query($updateQuery);
+		if ($updateResult == FALSE) {
+			print("WHAT");
+		}
+		viewPlaylist($db, $pid, $userID);
+	}
 }
 
 // view the main homepage of the site. 
