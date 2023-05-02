@@ -63,7 +63,7 @@
 	bottom: 0;
 	width: 100%;
 	max-width: 100vw;
-	height: 80px;
+	height: 84px;
 }
 
 .playerButton {
@@ -87,6 +87,34 @@
 .tnum:hover {
 	color:#1DB954;
 }
+
+#progress-bar {
+	width: 100%;
+	height: 4px;
+	background-color: #151F29;
+  }
+  
+#progress {
+	height: 100%;
+	background-color: #E8E9EC;
+  }
+
+#volume-slider {
+    background-color: #E8E9EC;
+	width: 100%;
+    height: 10px;
+    border-radius: 5px;
+}
+
+#volume-slider::-webkit-slider-thumb {
+    background-color: #151F29;
+}
+
+#volume-slider::-moz-range-thumb {
+    background-color: #151F29;
+}
+
+
 
 .loginTextBox {
 	background-color: #151F29;

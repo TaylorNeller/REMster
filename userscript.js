@@ -45,6 +45,7 @@ var repeating = false;
 
 // called when playing a song from a new collection. Updates all global info.
 function loadNewData(jsData) {
+    initializeVolumeSlider();
     otherSongsMap = new Map();
     currentSongData = jsData.split(", ");
     var otherSongs = currentSongData[4].split("/");
@@ -65,7 +66,19 @@ function playSong() {
     }
     var srcLink = 'songs/' + sid + '.mp3';
     playingHowl = new Howl({
-        src: [srcLink]
+        src: [srcLink],
+        onplay: function() {
+            // start the progress bar animation
+            progressInterval = setInterval(updateProgress, 50);
+          },
+          onpause: function() {
+            // stop the progress bar animation
+            clearInterval(progressInterval);
+          },
+          onstop: function() {
+            // reset the progress bar
+            updateProgress(0);
+          }
       });
     playingHowl.play();
     playingHowl.on("end", function() {chooseNextSong("N");});
@@ -153,7 +166,6 @@ function toggleShuffle() {
         shuffling = true;
         document.getElementById("shflimg").src= "art/assets/shuffleon.png";
     }
-    
 }
 
 // toggles repeat.
@@ -167,3 +179,19 @@ function toggleRepeat() {
         document.getElementById("rptimg").src= "art/assets/repeaton.png";
     }    
 }
+  // update the progress bar
+function updateProgress() {
+    var progress = playingHowl.seek() / playingHowl.duration();
+    document.getElementById('progress').style.width = progress * 100 + '%';
+}
+
+function initializeVolumeSlider() {
+    var volumeSlider = document.getElementById('volume-slider');
+    volumeSlider.addEventListener('input', setVolume);
+}
+
+function setVolume() {
+    var volumeSlider = document.getElementById('volume-slider');
+    playingHowl.volume(volumeSlider.value / 100);
+}
+  

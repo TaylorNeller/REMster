@@ -165,6 +165,11 @@ switch($op) {
 <!--CONTROL DECK / PLAYER-->
 <DIV class="player container-fluid" style="position:fixed; bottom:0">
 <DIV class="row">
+	<DIV id="progress-bar">
+	<DIV id="progress"></DIV>
+	</DIV>
+</DIV>
+<DIV class="row">
 	<DIV class="col-md-3">
 		<DIV id="nowPlaying"></DIV>
 	</DIV>
@@ -192,7 +197,11 @@ switch($op) {
 	</DIV>
 	</DIV>
 	<DIV class="col-md-1">
-		<!-- maybe a volume slider? or a like button? -->
+		<DIV class="buttonBox d-flex align-items-center">
+		<img src="art/assets/volume.png" alt="Volume icon" style="height: 20%">
+		<INPUT type="range" min="0" max="100" value="100" id="volume-slider">
+		</DIV>
+
 	</DIV>
 	<DIV class="col-md-3 d-flex align-items-end justify-content-end">
 		<FORM name='fmAddTo' method='POST' action='?op=addto'>
