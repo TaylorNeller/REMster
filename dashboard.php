@@ -124,7 +124,7 @@ switch($op) {
 					viewArtist($db, $_GET["artid"]);
 					break;
 				case "album":
-					viewAlbum($db, $_GET["aid"]);
+					viewAlbum($db, $_GET["aid"], $userID);
 					break;
 				// this refers to the "all playlists" menu item page
 				case "playlists":
@@ -133,6 +133,9 @@ switch($op) {
 				// this refers to viewing an individual playlist
 				case "playlist":
 					viewPlaylist($db, $_GET["pid"], $userID);
+					break;
+				case "liked":
+					viewLiked($db, $userID);
 					break;
 				case "newplaylist":
 					viewEditPlaylistPage($db, $userID, -1);

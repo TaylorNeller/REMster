@@ -9,7 +9,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["like-id"] != FALSE) {
   }
 // INTERNAL ONLY function which takes array of song info
 // prints single song in the context of a list of songs
-function showSongsList($db, $songsData, $mediaID, $mediaType) {
+function showSongsList($db, $songsData, $mediaID, $mediaType, $userID) {
+	
+	$likeQuery = "SELECT sid FROM " . 
+				 "liked NATURAL JOIN song_playlist WHERE uname='$userID'";
+	$likeResponse = $db->query($likeQuery);
+	$liked = [];
+	if ($likeResponse != FALSE) {
+		while ($row = $likeResponse->fetch()) {
+			$sid = $row["sid"];
+			array_push($liked, $sid);
+		}
+	}
+	$likePidQuery = "SELECT pid FROM liked WHERE uname='$userID'";
+	$pidResponse = $db->query($likePidQuery);
+	$likedPid = -1;
+	if ($pidResponse != FALSE) {
+		$row = $pidResponse->fetch();
+		$likedPid = $row["pid"];
+	}
+
 	// TODO: make clicking song name play song
 	$trackNum = 1;
 	foreach($songsData as $currSong) {
@@ -58,8 +77,17 @@ function showSongsList($db, $songsData, $mediaID, $mediaType) {
 		print("<TD align='right'></TD>\n");
 		print("<TD>" . gmdate("i:s", $currDuration) . "</TD>\n");
 		print("<TD><form method='POST'>"
-				. "<input type='hidden' name='like-id' value='$currSid'/>"
-				. "<button type='submit' id='like-$currSid' class='like-btn' onclick='toggleLike($currSid)'>"
+				. "<input type='hidden' name='like-sid' value='$currSid'/>"
+				. "<input type='hidden' name='like-pid' value='$likedPid'/>"
+				. "<button type='submit' id='like-$currSid' ");
+		if (in_array($currSid, $liked)) {
+			print("class='like-btn liked'");
+		}
+		else {
+			print("class='like-btn not-liked'");
+		}
+				
+		print(" onclick='toggleLike($currSid,$likedPid)'>"
 				. "<span class='heart-icon'></span></button></form></TD>\n");
 		print("</TR>\n");
 		$trackNum++;
@@ -67,7 +95,7 @@ function showSongsList($db, $songsData, $mediaID, $mediaType) {
 }
 
 function showSongsResultList($db, $songSIDs) {
-	$sidString = implode($songSIDs, ", ");
+	$sidString = implode(", ", $songSIDs);
 	$metaQuery = "SELECT * FROM song WHERE sid IN ($sidString)";
 	$metaResult = $db->query($metaQuery);
 	if ($metaResult == FALSE) {
@@ -162,7 +190,28 @@ function getPlaylistData($db, $playlistID) {
 	return $playlistData;
 }
 
+function viewLiked($db, $userID) {
+	$pidQuery = "SELECT pid FROM liked WHERE uname='$userID'";
+	$pidResult = $db->query($pidQuery);
+	$pid = -1;
+	if ($pidResult != FALSE) {
+		$row = $pidResult->fetch();
+		$pid = $row["pid"];
+	}
+	viewPlaylist($db, $pid, $userID);
+}
+
 function viewPlaylist($db, $playlistID, $userID) {
+
+	$likePidQuery = "SELECT pid FROM liked WHERE uname='$userID'";
+	$pidResponse = $db->query($likePidQuery);
+	$likedPid = -1;
+	if ($pidResponse != FALSE) {
+		$row = $pidResponse->fetch();
+		$likedPid = $row["pid"];
+	}
+
+
 	// retrieve playlist metadata
 	$playlistData = getPlaylistData($db, $playlistID);
 	if ($playlistData["is_public"] == "F" && $playlistData["owner"] != $userID) {
@@ -217,7 +266,7 @@ function viewPlaylist($db, $playlistID, $userID) {
 					print("$numSongs songs, " . intdiv($runtime, 60) . " min " . 
 						($runtime % 60) . " sec");
 					$editLink = "<a href=?op=editplaylist&pid=$playlistID>Edit Playlist</a>";
-					if ($userID == $playlistData["owner"]) {
+					if ($userID == $playlistData["owner"] && $playlistID != $likedPid) {
 						print("&nbsp;&bull;&nbsp;" . $editLink);
 					}
 				print("</DIV>\n");
@@ -246,7 +295,7 @@ function viewPlaylist($db, $playlistID, $userID) {
 			print($tableHeader);
 
 			// shows songs in collection
-			showSongsList($db, $playlistSongs, $playlistID, "P");
+			showSongsList($db, $playlistSongs, $playlistID, "P", $userID);
 			print("</TABLE>\n</DIV>\n");
 		}
 
@@ -334,7 +383,7 @@ function getSongs($db, $mediaID, $mediaType) {
 }
 
 //handles front-end display of an album.
-function viewAlbum($db, $albumID) {
+function viewAlbum($db, $albumID, $userID) {
 	// retrieve album data (metadata, artists, songs)
 	$albumData = getAlbumData($db, $albumID);
 	$albumArtists = getArtistsFromMedia($db, $albumID, "A");
@@ -400,7 +449,7 @@ function viewAlbum($db, $albumID) {
 		print($tableHeader);
 
 	 	// shows songs in collection
-		showSongsList($db, $albumSongs, $albumID, "A");
+		showSongsList($db, $albumSongs, $albumID, "A", $userID);
 		print("</TABLE>\n</DIV>\n");
 
 		print("<DIV class='row f_standardText' style='height: 100px; margin-top: 20px'><p>");
@@ -661,7 +710,7 @@ function showLandingPage() {
 				print("<FORM name = 'fmLogin' method='POST' action='?op=login'>\n");
 				print("<INPUT class='loginTextBox' type='text' name='uname' size='16' placeholder='username' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass' size='16' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='password' name='pass' size='16' placeholder='password' />\n");
 				print("<br>");
 			 	print("<INPUT type='submit' value='login' style='margin-top: 20px'/>\n");
 				print("</FORM>\n");
@@ -674,9 +723,9 @@ function showLandingPage() {
 				print("<br>");
 				print("<INPUT class='loginTextBox' type='text' name='email' size='16' placeholder='email' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass1' size='16' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='password' name='pass1' size='16' placeholder='password' />\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='text' name='pass2' size='16' placeholder='re-enter' />\n");
+				print("<INPUT class='loginTextBox' type='password' name='pass2' size='16' placeholder='re-enter' />\n");
 				print("<br>");
 			 	print("<INPUT type='submit' value='register' style='margin-top: 20px'/>\n");
 				print("</FORM>\n");
@@ -717,6 +766,13 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 			$registerQuery = 	"INSERT INTO users " . 
 								"VALUES ('$uname', '$pass1', '$email')";
 			$registerResult = $db->query($registerQuery);
+			$playlistQuery =	"INSERT INTO playlist (pname, owner, is_public) " .
+								"VALUES ('Liked Songs','$uname','F')";
+			$playlistResult = $db->query($playlistQuery);
+			$pid = $db->lastInsertId();
+			$likedQuery =		"INSERT INTO liked " .
+								"VALUES ('$uname',$pid)";
+			$likedResult = $db->query($likedQuery);
 			return TRUE;
 		}
 	}
@@ -840,7 +896,7 @@ function processEditPlaylist($db, $data, $playlistID, $userID) {
 	}
 
 	$songsToRemove = $data["cbRemove"];
-	$toRemoveString = "(". implode($songsToRemove, ", ") . ")";
+	$toRemoveString = "(". implode( ", ",$songsToRemove) . ")";
 	// only do this if anything to remove
 	if (sizeof($songsToRemove) > 0) {
 		$removeQuery = "DELETE FROM song_playlist WHERE sid IN $toRemoveString";
@@ -988,7 +1044,7 @@ function executeSearch($db, $query, $userID) {
 
 	$songResultsData = array_unique($songResultsData);
 	// add albums/playlists/artists where songs appear
-	$sidString = implode($songResultsData, ", ");
+	$sidString = implode(", ", $songResultsData);
 	$suplAlbumQuery = "SELECT DISTINCT aid FROM song_album WHERE sid IN ($sidString)";
 	$suplAlbumResult = $db->query($suplAlbumQuery);
 	if ($suplAlbumResult != FALSE) {

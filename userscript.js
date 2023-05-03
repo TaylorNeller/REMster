@@ -1,15 +1,16 @@
 
 
 
-function toggleLike(sid) {
+function toggleLike(sid, pid) {
 
     event.preventDefault(); // prevent the form from being submitted
 
-  // make an AJAX request to your PHP script
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'like.php', true);
-  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  xhr.send('like-id=' + sid);
+    // make an AJAX request to your PHP script
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'like.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.send('like-sid=' + sid+'&like-pid=' + pid);
+    // xhr.send('like-pid=');
 
 
     button = document.getElementById("like-"+sid);
