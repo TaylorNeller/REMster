@@ -1254,13 +1254,13 @@ function viewResults($db, $data) {
 function viewAccountPage($db, $userID) {
 	print("<DIV class='container-fluid contentContainer'>\n");
 	print("<DIV class='row headerRow d_flex align-items-center'>\n");
-			print("<p>$userID's account</p>&emsp;\n");
+			print("<p><b>$userID's</b> account</p>&emsp;\n");
 			print("<A href='?op=logout'>"
 						."<DIV class='otherMenu d-flex justify-content-center'>"
 						."Sign Out</DIV></A>");
 		print("</DIV>\n");
 
-		print("<DIV class='row textRow' style='margin-top: 50px'>\n");
+		print("<DIV class='row labelRow' style='margin-top: 50px'>\n");
 		print("<p>Change Password</p>");
 		print("</DIV>\n");
 			print("<DIV class='row'>\n");
@@ -1274,7 +1274,47 @@ function viewAccountPage($db, $userID) {
 			 	print("<INPUT type='submit' class='otherMenu' value='Update' style='margin-top: 20px; width: 100%'/>\n");
 				print("</FORM>\n");
 			print("</DIV>\n");
+		print("<DIV class='row labelRow' style='margin-top: 50px'>\n");
+		print("<p>Become an Admin</p>");
+		print("</DIV>\n");
+		$adminQuery = "SELECT uname FROM admins WHERE uname='$userID'";
+		$adminResult = $db->query($adminQuery);
+		$isAdmin = FALSE;
+		if ($adminResult->fetch()["uname"] != "") {
+			$isAdmin = TRUE;
+		}
+			print("<DIV class='row'>\n");
+			print("<DIV class='col-md-1'>\n");
+			print("<FORM name='fmBecomeAdmin' method='POST' action='?op=makeadmin'>");
+			print("<INPUT name='cbAdmin' type='checkbox' value='T' ");
+			// if currently admin, check box by default
+			if ($isAdmin == TRUE) {
+				print("checked>\n");
+			}
+			else {
+				print(">\n");
+			}
+			print("<INPUT type='submit' class='otherMenu' value='Save Changes' style='margin-top: 20px; width: 300%'/>\n");
+			print("</FORM>\n");
+			print("</DIV>\n");
+			print("<DIV class='col-md-11 textRow'>\n");
+			print("<p>If checked, user is an admin account and has access to upload/deletion privledges.</p>");
+			print("</DIV>\n");
+			print("</DIV>\n");
 	print("</DIV>\n");
+}
+
+function processMakeAdmin($db, $userID, $isAdmin) {
+	if ($isAdmin == "T") {
+		$adminQuery = "INSERT INTO admins VALUE('$userID')";
+		$adminResult = $db->query($adminQuery);
+	}
+	else {
+		$adminQuery = "DELETE FROM admins WHERE uname='$userID'";
+		$adminResult = $db->query($adminQuery);
+	}
+	header("refresh:2;url=dashboard.php?op=home");
+	printf("<DIV class='headerRow'>Changes saved. Redirecting...</DIV>");
 }
 
 function processChangePassword($db, $userID, $data) {

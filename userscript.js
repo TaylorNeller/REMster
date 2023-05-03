@@ -200,4 +200,3 @@ function setVolume() {
     var volumeSlider = document.getElementById('volume-slider');
     playingHowl.volume(volumeSlider.value / 100);
 }
-  

@@ -120,6 +120,9 @@ switch($op) {
 				case "account":
 					viewAccountPage($db, $userID);
 					break;
+				case "makeadmin":
+					processMakeAdmin($db, $userID, $_POST["cbAdmin"]);
+					break;
 				case "search":
 					viewSearch($db);
 					break;
