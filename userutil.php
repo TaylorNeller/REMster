@@ -586,7 +586,7 @@ function getArtist($db, $artistID) {
 	return $result;
 }
 
-function viewArtist($db, $artistID) {
+function viewArtist($db, $artistID, $userID) {
 	$artistData = getArtist($db, $artistID);
 	$workedOnAlbums = $artistData["albums"];
 	
@@ -647,7 +647,7 @@ function viewArtist($db, $artistID) {
 		print("<b>Appears In</b>");
 	print("</DIV>\n");
 
-	$appearsInPlaylists = getAppearances($db, $artistID);
+	$appearsInPlaylists = getAppearances($db, $artistID, $userID);
 
 	print("<DIV class='scrollable-container'>\n");
 		print("<DIV class='scrollable-content'>\n");
@@ -664,9 +664,9 @@ function viewArtist($db, $artistID) {
 	}
 
 // returns an array of the playlists the given artist appears in
-function getAppearances($db, $artistID) {
-	$appearsInQuery = "SELECT DISTINCT pid FROM song_playlist NATURAL JOIN song_artist " . 
-		"WHERE artid = $artistID";
+function getAppearances($db, $artistID, $userID) {
+	$appearsInQuery = "SELECT DISTINCT pid FROM song_playlist NATURAL JOIN playlist NATURAL JOIN song_artist " . 
+		"WHERE artid = $artistID AND (owner='$userID' OR is_public='T')";
 	
 	$appearsInResult = $db->query($appearsInQuery);
 	if ($appearsInResult != FALSE) {
@@ -1037,7 +1037,7 @@ function viewSearch($db) {
 			print("<p>Search</p>\n");
 		print("</DIV>\n");
 		print("<DIV class='row d-flex'>\n");
-		print("<FORM name='fmSearch' method='GET'>\n");
+		print("<FORM class='d-flex justify-content-center' name='fmSearch' method='GET'>\n");
 			print("<INPUT name='op' type='hidden' value='searchfor'></INPUT>");
 			print("<INPUT name='query' class='f_standardText searchBox' type='textbox'></INPUT>");
 			print("<INPUT name='sendsearch' class='f_standardText searchButton' type='submit' value='GO'></INPUT>");
@@ -1048,100 +1048,126 @@ function viewSearch($db) {
 // executes search in three stages, zooming-out in terms of granularity.
 // searches through artists, albums, songs, and playlists (if public or owner is user)
 function executeSearch($db, $query, $userID) {
-	// arrays for results. Only search by soundex if no results up to that point (arrays empty).
-	$songResultsData = [];
-	$albumResultsData = [];
-	$artistResultsData = [];
-	$playlistResultsData = [];
+	if ($query == "") {
+		header("refresh:2;url=dashboard.php?op=search");
+		printf("<DIV class='headerRow'>Query cannot be empty! Redirecting...</DIV>");
+	}
+	else {
+		// arrays for results. Only search by soundex if no results up to that point (arrays empty).
+		$songResultsData = [];
+		$albumResultsData = [];
+		$artistResultsData = [];
+		$playlistResultsData = [];
 
-	// 1. search for the string directly, or things LIKE the string
-	$firstSongQuery = "SELECT sid FROM song WHERE sname='$query' OR sname LIKE('%$query%')";
-	$firstSongResult = $db->query($firstSongQuery);
-	while ($currSid = $firstSongResult->fetch()["sid"]) {
-		array_push($songResultsData, $currSid);
-	}
-	$firstAlbumQuery = "SELECT aid FROM album WHERE aname='$query' OR aname LIKE('%$query%')";
-	$firstAlbumResult = $db->query($firstAlbumQuery);
-	while ($currAid = $firstAlbumResult->fetch()["aid"]) {
-		array_push($albumResultsData, $currAid);
-	}
-	$firstArtistQuery = "SELECT artid FROM artist WHERE artname='$query' OR artname LIKE ('%$query%')";
-	$firstArtistResult = $db->query($firstArtistQuery);
-	while ($currArtid = $firstArtistResult->fetch()["artid"]) {
-		array_push($artistResultsData, $currArtid);
-	}
-	$firstPlaylistQuery = "SELECT pid FROM playlist WHERE (pname='$query' OR pname LIKE('%$query%'))" . 
-	" AND (owner='$userID' OR is_public='T')";
-	$firstPlaylistResult = $db->query($firstPlaylistQuery);
-	while ($currPid = $firstPlaylistResult->fetch()["pid"]) {
-		array_push($playlistResultsData, $currPid);
-	}
-
-	// 2. if no results so far, search for the soundex of the string
-	if (sizeof($songResultsData) == 0 && sizeof($albumResultsData) == 0 &&
-		sizeof($artistResultsData) == 0 && sizeof($playlistResultsData) == 0) {
-		$finalSongQuery = "SELECT sid FROM song WHERE SOUNDEX(sname) = SOUNDEX('$query')";
-		$finalSongResult = $db->query($finalSongQuery);
-		while ($currSid = $finalSongResult->fetch()["sid"]) {
+		// 1. search for the string directly, or things LIKE the string
+		$firstSongQuery = "SELECT sid FROM song WHERE sname='$query' OR sname LIKE('%$query%')";
+		$firstSongResult = $db->query($firstSongQuery);
+		while ($currSid = $firstSongResult->fetch()["sid"]) {
 			array_push($songResultsData, $currSid);
 		}
-		$finalAlbumQuery = "SELECT aid FROM album WHERE SOUNDEX(aname) = SOUNDEX('$query')";
-		$finalAlbumResult = $db->query($finalAlbumQuery);
-		while ($currAid = $finalAlbumResult->fetch()["aid"]) {
+		$firstAlbumQuery = "SELECT aid FROM album WHERE aname='$query' OR aname LIKE('%$query%')";
+		$firstAlbumResult = $db->query($firstAlbumQuery);
+		while ($currAid = $firstAlbumResult->fetch()["aid"]) {
 			array_push($albumResultsData, $currAid);
 		}
-		$finalArtistQuery = "SELECT artid FROM artist WHERE SOUNDEX(artname) = SOUNDEX('$query')";
-		$finalArtistResult = $db->query($finalArtistQuery);
-		while ($currArtid = $finalArtistResult->fetch()["artid"]) {
+		$firstArtistQuery = "SELECT artid FROM artist WHERE artname='$query' OR artname LIKE ('%$query%')";
+		$firstArtistResult = $db->query($firstArtistQuery);
+		while ($currArtid = $firstArtistResult->fetch()["artid"]) {
 			array_push($artistResultsData, $currArtid);
 		}
-		$finalPlaylistQuery = "SELECT pid FROM playlist WHERE SOUNDEX(pname) = SOUNDEX('$query')" . 
+		$firstPlaylistQuery = "SELECT pid FROM playlist WHERE (pname='$query' OR pname LIKE('%$query%'))" . 
 		" AND (owner='$userID' OR is_public='T')";
-		$finalPlaylistResult = $db->query($finalPlaylistQuery);
-		while ($currPid = $finalPlaylistResult->fetch()["pid"]) {
+		$firstPlaylistResult = $db->query($firstPlaylistQuery);
+		while ($currPid = $firstPlaylistResult->fetch()["pid"]) {
 			array_push($playlistResultsData, $currPid);
 		}
-	}
 
-	$songResultsData = array_unique($songResultsData);
-	// add albums/playlists/artists where songs appear
-	$sidString = implode(", ", $songResultsData);
-	$suplAlbumQuery = "SELECT DISTINCT aid FROM song_album WHERE sid IN ($sidString)";
-	$suplAlbumResult = $db->query($suplAlbumQuery);
-	if ($suplAlbumResult != FALSE) {
-		while ($currAid = $suplAlbumResult->fetch()["aid"]) {
-			array_push($albumResultsData, $currAid);
+		// 2. if no results so far, search for the soundex of the string
+		if (sizeof($songResultsData) == 0 && sizeof($albumResultsData) == 0 &&
+			sizeof($artistResultsData) == 0 && sizeof($playlistResultsData) == 0) {
+			$secondSongQuery = "SELECT sid FROM song WHERE SOUNDEX(sname) = SOUNDEX('$query')";
+			$secondSongResult = $db->query($secondSongQuery);
+			while ($currSid = $secondSongResult->fetch()["sid"]) {
+				array_push($songResultsData, $currSid);
+			}
+			$secondAlbumQuery = "SELECT aid FROM album WHERE SOUNDEX(aname) = SOUNDEX('$query')";
+			$secondAlbumResult = $db->query($secondAlbumQuery);
+			while ($currAid = $secondAlbumResult->fetch()["aid"]) {
+				array_push($albumResultsData, $currAid);
+			}
+			$secondArtistQuery = "SELECT artid FROM artist WHERE SOUNDEX(artname) = SOUNDEX('$query')";
+			$secondArtistResult = $db->query($secondArtistQuery);
+			while ($currArtid = $secondArtistResult->fetch()["artid"]) {
+				array_push($artistResultsData, $currArtid);
+			}
+			$secondPlaylistQuery = "SELECT pid FROM playlist WHERE SOUNDEX(pname) = SOUNDEX('$query')" . 
+			" AND (owner='$userID' OR is_public='T')";
+			$secondPlaylistResult = $db->query($secondPlaylistQuery);
+			while ($currPid = $secondPlaylistResult->fetch()["pid"]) {
+				array_push($playlistResultsData, $currPid);
+			}
 		}
-	}
-	
-	$suplArtistQuery = "SELECT DISTINCT artid FROM song_artist WHERE sid IN ($sidString)";
-	$suplArtistResult = $db->query($suplArtistQuery);
-	if ($suplArtistResult != FALSE) {
-		while ($currArtid = $suplArtistResult->fetch()["artid"]) {
-			array_push($artistResultsData, $currArtid);
-		}
-	}
-	
-	$suplPlaylistQuery = "SELECT DISTINCT pid FROM song_playlist WHERE sid IN ($sidString)" . 
-	" AND (owner='$userID' OR is_public='T')";
-	$suplPlaylistResult = $db->query($suplPlaylistQuery);
-	if ($suplPlaylistResult != FALSE) {
-		while ($currPid = $suplPlaylistResult->fetch()["pid"]) {
-			array_push($playlistResultsData, $currPid);
-		}
-	}
 
-	// clean results - remove dupes
-	$albumResultsData = array_unique($albumResultsData);
-	$artistResultsData = array_unique($artistResultsData);
-	$playlistResultsData = array_unique($playlistResultsData);
+		$songResultsData = array_unique($songResultsData);
+		// add albums/playlists/artists where songs appear
+		$sidString = implode(", ", $songResultsData);
+		$thirdAlbumQuery = "SELECT DISTINCT aid FROM song_album WHERE sid IN ($sidString)";
+		$thirdAlbumResult = $db->query($thirdAlbumQuery);
+		if ($thirdAlbumResult != FALSE) {
+			while ($currAid = $thirdAlbumResult->fetch()["aid"]) {
+				array_push($albumResultsData, $currAid);
+			}
+		}
+		
+		$thirdArtistQuery = "SELECT DISTINCT artid FROM song_artist WHERE sid IN ($sidString)";
+		$thirdArtistResult = $db->query($thirdArtistQuery);
+		if ($thirdArtistResult != FALSE) {
+			while ($currArtid = $thirdArtistResult->fetch()["artid"]) {
+				array_push($artistResultsData, $currArtid);
+			}
+		}
+		
+		$thirdPlaylistQuery = "SELECT DISTINCT pid FROM song_playlist WHERE sid IN ($sidString)" . 
+		" AND (owner='$userID' OR is_public='T')";
+		$thirdPlaylistResult = $db->query($thirdPlaylistQuery);
+		if ($thirdPlaylistResult != FALSE) {
+			while ($currPid = $thirdPlaylistResult->fetch()["pid"]) {
+				array_push($playlistResultsData, $currPid);
+			}
+		}
 
-	$totalData = [];
-	array_push($totalData, $songResultsData);
-	array_push($totalData, $albumResultsData);
-	array_push($totalData, $artistResultsData);
-	array_push($totalData, $playlistResultsData);
-	viewResults($db, $totalData);
+		// add songs in albums/artists that appear
+		$aidString = implode(", ", $albumResultsData);
+		$finalAlbumQuery = "SELECT DISTINCT sid FROM song_album WHERE aid IN ($aidString)";
+		$finalAlbumResult = $db->query($finalAlbumQuery);
+		if ($finalAlbumResult != FALSE) {
+			while ($currSid = $finalAlbumResult->fetch()["sid"]) {
+				array_push($songResultsData, $currSid);
+			}
+		}
+
+		$artidString = implode(", ", $artistResultsData);
+		$finalArtistQuery = "SELECT DISTINCT sid FROM song_artist WHERE artid IN ($artidString)";
+		$finalArtistResult = $db->query($finalArtistQuery);
+		if ($finalArtistResult != FALSE) {
+			while ($currSid = $finalArtistResult->fetch()["sid"]) {
+				array_push($songResultsData, $currSid);
+			}
+		}
+
+		// clean results - remove dupes
+		$songResultsData = array_unique($songResultsData);
+		$albumResultsData = array_unique($albumResultsData);
+		$artistResultsData = array_unique($artistResultsData);
+		$playlistResultsData = array_unique($playlistResultsData);
+
+		$totalData = [];
+		array_push($totalData, $songResultsData);
+		array_push($totalData, $albumResultsData);
+		array_push($totalData, $artistResultsData);
+		array_push($totalData, $playlistResultsData);
+		viewResults($db, $totalData);
+	}
 }
 
 function viewResults($db, $data) {
@@ -1265,11 +1291,11 @@ function viewAccountPage($db, $userID) {
 		print("</DIV>\n");
 			print("<DIV class='row'>\n");
 				print("<FORM name = 'fmChangePass' method='POST' action='?op=changepass'>\n");
-				print("<INPUT class='loginTextBox' type='password' name='oldpass' size='16' placeholder='old password' />\n");
+				print("<INPUT class='loginTextBox' type='password' name='oldpass' size='16' placeholder='old password'/>\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='password' name='pass1' size='16' placeholder='password' />\n");
+				print("<INPUT class='loginTextBox' type='password' name='pass1' size='16' placeholder='new password'/>\n");
 				print("<br>");
-				print("<INPUT class='loginTextBox' type='password' name='pass2' size='16' placeholder='re-enter' />\n");
+				print("<INPUT class='loginTextBox' type='password' name='pass2' size='16' placeholder='re-enter'/>\n");
 				print("<br>");
 			 	print("<INPUT type='submit' class='otherMenu' value='Update' style='margin-top: 20px; width: 100%'/>\n");
 				print("</FORM>\n");
@@ -1283,7 +1309,7 @@ function viewAccountPage($db, $userID) {
 		if ($adminResult->fetch()["uname"] != "") {
 			$isAdmin = TRUE;
 		}
-			print("<DIV class='row'>\n");
+		print("<DIV class='row'>\n");
 			print("<DIV class='col-md-1'>\n");
 			print("<FORM name='fmBecomeAdmin' method='POST' action='?op=makeadmin'>");
 			print("<INPUT name='cbAdmin' type='checkbox' value='T' ");
@@ -1300,7 +1326,7 @@ function viewAccountPage($db, $userID) {
 			print("<DIV class='col-md-11 textRow'>\n");
 			print("<p>If checked, user is an admin account and has access to upload/deletion privledges.</p>");
 			print("</DIV>\n");
-			print("</DIV>\n");
+		print("</DIV>\n");
 	print("</DIV>\n");
 }
 
@@ -1329,14 +1355,14 @@ function processChangePassword($db, $userID, $data) {
 	}
 	else if ($valid == FALSE) {
 		header("refresh:2;url=dashboard.php?op=account");
-		printf("<DIV class='textRow'>incorrect password.</DIV>");
+		printf("<DIV class='headerRow'>incorrect password.</DIV>");
 	}
 	else {
 		$passEncrypted = md5($pass1);
 		$updatePassQuery = "UPDATE users SET pass='$passEncrypted' WHERE uname='$userID'";
 		$updatePassResult = $db->query($updatePassQuery);
 		header("refresh:2;url=dashboard.php?op=home");
-		printf("Successfully updated password!");
+		printf("<DIV class='headerRow'>Successfully updated password! Redirecting...</DIV>");
 	}
 }
 

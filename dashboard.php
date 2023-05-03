@@ -38,6 +38,7 @@ switch($op) {
 <HTML>
 <HEAD>
 	<TITLE>REMSTER 1.0</TITLE>
+	<link rel="icon" type="image/x-icon" href="art/assets/favicon.ico">
 	<link rel="stylesheet" href="style.css">
 	<script src="adminscript.js"></script> 
 	<script src="userscript.js"></script>
@@ -74,7 +75,7 @@ switch($op) {
 		</DIV></A>
 		<A href="?op=dj">
 		<DIV class="row sideMenu" style="white-space: nowrap">
-			DJ Mode
+			DJ Mode (Soon!)
 		</DIV></A>
 		<?php
 			if (isAdmin($db, $_SESSION["uname"])) {
@@ -130,7 +131,7 @@ switch($op) {
 					executeSearch($db, $_GET["query"], $userID);
 					break;
 				case "artist":
-					viewArtist($db, $_GET["artid"]);
+					viewArtist($db, $_GET["artid"], $userID);
 					break;
 				case "album":
 					viewAlbum($db, $_GET["aid"], $userID);
@@ -173,9 +174,9 @@ switch($op) {
 				case "remove":
 					processAlbumRemoval($db, $_POST);
 					break;
-				// case "404":
-				// 	show404($_GET["src"]);
-				// 	break;
+				case "404":
+					show404($_GET["src"]);
+					break;
 			}
 		}
 		?>
