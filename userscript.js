@@ -107,7 +107,6 @@ function chooseNextSong(nextChoice) {
         index++;
     }
     else if (nextChoice == "P") {
-        console.log(playingHowl.seek());
         if (playingHowl.seek() < 2) {
             index = Math.max(index - 1, 0);
         }
@@ -115,7 +114,7 @@ function chooseNextSong(nextChoice) {
             index = index;
         }
     }
-    var nextSid = otherSids[index % (numSongs - 1)];
+    var nextSid = otherSids[index % (numSongs)];
     var nextSong = otherSongsMap.get(nextSid);
     currentSongData = nextSong;
     playSong();

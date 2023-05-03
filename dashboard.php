@@ -37,7 +37,7 @@ switch($op) {
 ?>
 <HTML>
 <HEAD>
-	<TITLE>REMSTER 0.0</TITLE>
+	<TITLE>REMSTER 1.0</TITLE>
 	<link rel="stylesheet" href="style.css">
 	<script src="adminscript.js"></script> 
 	<script src="userscript.js"></script>
@@ -54,7 +54,7 @@ switch($op) {
 
 
 		?>
-		<A href="?op=logout">
+		<A href="?op=account">
 		<DIV class="row sideMenu" style="white-space: nowrap">
 			My Account
 		</DIV></A>
@@ -114,6 +114,12 @@ switch($op) {
 				case "home":
 					viewHomepage($db, $userID);
 					break;
+				case "changepass":
+					processChangePassword($db, $userID, $_POST);
+					break;
+				case "account":
+					viewAccountPage($db, $userID);
+					break;
 				case "search":
 					viewSearch($db);
 					break;
@@ -136,6 +142,9 @@ switch($op) {
 					break;
 				case "liked":
 					viewLiked($db, $userID);
+					break;
+				case "dj":
+					viewHomepage($db, $userID);
 					break;
 				case "newplaylist":
 					viewEditPlaylistPage($db, $userID, -1);
@@ -161,9 +170,9 @@ switch($op) {
 				case "remove":
 					processAlbumRemoval($db, $_POST);
 					break;
-				case "404":
-					show404($_GET["src"]);
-					break;
+				// case "404":
+				// 	show404($_GET["src"]);
+				// 	break;
 			}
 		}
 		?>

@@ -29,7 +29,6 @@ function showSongsList($db, $songsData, $mediaID, $mediaType, $userID) {
 		$likedPid = $row["pid"];
 	}
 
-	// TODO: make clicking song name play song
 	$trackNum = 1;
 	foreach($songsData as $currSong) {
 		print("<TR>\n");
@@ -211,6 +210,12 @@ function viewPlaylist($db, $playlistID, $userID) {
 		$likedPid = $row["pid"];
 	}
 
+	$curratedQuery = "SELECT pid FROM currated";
+	$curratedResult = $db->query($curratedQuery);
+	$isCurrated = FALSE;
+	if ($curratedResult->fetch()["pid"] != "") {
+		$isCurrated = TRUE;
+	}
 
 	// retrieve playlist metadata
 	$playlistData = getPlaylistData($db, $playlistID);
@@ -239,7 +244,10 @@ function viewPlaylist($db, $playlistID, $userID) {
 			print("<DIV class='col-md-9 my-auto'>\n");
 
 				print("<DIV class='row textRow'>\n");
-				if ($playlistData["is_public"] == "T") {
+				if ($isCurrated == TRUE) {
+					print("CURRATED PLAYLIST");
+				}
+				else if ($playlistData["is_public"] == "T") {
 					print("PUBLIC PLAYLIST");
 				}
 				else {
@@ -344,7 +352,6 @@ function getArtistsFromMedia($db, $mediaID, $mediaType) {
 	}
 	$artistResult = $db->query($artistQuery);
 	$artists = [];
-	//todo add error handling
 	while ($artistData = $artistResult->fetch()) {
 		$artists[$artistData["artid"]] = $artistData["artname"];
 	}
@@ -368,7 +375,6 @@ function getSongs($db, $mediaID, $mediaType) {
 	}
 	$songResult = $db->query($songQuery);
 	$songs = [];
-	//todo add error handling
 	while($currSongRes = $songResult->fetch()) {
 		$currSong = [];
 		$currSong["name"] = $currSongRes["sname"];
@@ -388,7 +394,6 @@ function viewAlbum($db, $albumID, $userID) {
 	$albumData = getAlbumData($db, $albumID);
 	$albumArtists = getArtistsFromMedia($db, $albumID, "A");
 	$albumSongs = getSongs($db, $albumID, "A");
-	//todo: implement error handling in those methods
 
 	print("<DIV class='container contentContainer'>\n");
 
@@ -435,7 +440,6 @@ function viewAlbum($db, $albumID, $userID) {
 			print("</DIV>\n");
 		print("</DIV>\n");
 
-	// 	// thought: use javascript to handle liked songs
 		print("<DIV class='row'>\n");
 		$tableHeader = "<TABLE class='f_standardText' " . 
 			"width='100%' cellpadding='5' style='margin-top: 10px'>" .
@@ -591,7 +595,6 @@ function viewArtist($db, $artistID) {
 
 	print("<DIV class='row'>");
 
-		// ART SPOT: could reuse this if adding artist PFPs
 		print("<DIV class='col-md-3'>\n");
 			$srcLink = "art/profile/$artistID.png";
 			$alttext = $artistData["name"];
@@ -736,15 +739,15 @@ function showLandingPage() {
 
 function validateUser($db, $uname, $pass) {
 	// returns boolean
-	// add encryption!!!
+	$passEncrypted = md5($pass);
 	$loginQuery = 	"SELECT uname " . 
 					"FROM users " .
-					"WHERE uname='$uname' AND pass='$pass'";
+					"WHERE uname='$uname' AND pass='$passEncrypted'";
 	$result = $db->query($loginQuery);
 	return $result->fetch()["uname"] == "" ? FALSE : TRUE;
 }
 
-// unfinished, not fully working
+// creates a new user account.
 function registerUser($db, $uname, $email, $pass1, $pass2) {
 	if ($pass1 != $pass2) {
 		header("refresh:2;url=dashboard.php");
@@ -752,7 +755,9 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 	}
 
 	else {
-		// this validation is not working
+
+		$passEncrypted = md5($pass1);
+
 		$validationQuery = 	"SELECT uname " .
 							"FROM users " .
 							"WHERE email='$email'";
@@ -764,7 +769,7 @@ function registerUser($db, $uname, $email, $pass1, $pass2) {
 
 		else {
 			$registerQuery = 	"INSERT INTO users " . 
-								"VALUES ('$uname', '$pass1', '$email')";
+								"VALUES ('$uname', '$passEncrypted', '$email')";
 			$registerResult = $db->query($registerQuery);
 			$playlistQuery =	"INSERT INTO playlist (pname, owner, is_public) " .
 								"VALUES ('Liked Songs','$uname','F')";
@@ -783,6 +788,22 @@ function viewEditPlaylistPage($db, $userID, $playlistID) {
 	if ($playlistID != -1) {
 		$playlistData = getPlaylistData($db, $playlistID);
 	}
+
+	$adminQuery = "SELECT uname FROM admins WHERE uname='$userID'";
+	$adminResult = $db->query($adminQuery);
+	$isAdmin = FALSE;
+	if ($adminResult->fetch()["uname"] != "") {
+		$isAdmin = TRUE;
+	}
+
+	$curratedQuery = "SELECT pid FROM currated WHERE pid=$playlistID";
+	$curratedResult = $db->query($curratedQuery);
+	$isCurrated = FALSE;
+	if ($curratedResult->fetch()["pid"] != "") {
+		$isCurrated = TRUE;
+	}
+
+
 	print("<DIV class='container contentContainer'>\n");
 	print("<FORM name='fmEdit' method='POST' action='?op=submitedits&pid=$playlistID'>\n");
 		print("<DIV class='row'>");
@@ -817,7 +838,19 @@ function viewEditPlaylistPage($db, $userID, $playlistID) {
 					// only allow deletion if editing current playlist
 					if ($playlistID != -1) {
 						print("<p>Delete Playlist?&emsp;</p>");
-						print("<INPUT name='cbDelPlaylist' type='checkbox' value='T'>\n");
+						print("<INPUT name='cbDelPlaylist' type='checkbox' value='T'>&emsp;\n");
+					}
+					// if user is admin, allow adding to currated playlists
+					if ($isAdmin == TRUE) {
+						print("<p>Add to currated?&emsp;</p>");
+						print("<INPUT name='cbRecommend' type='checkbox' value='T' ");
+						// if currently in currated, check box by default
+						if ($isCurrated == TRUE) {
+							print("checked>\n");
+						}
+						else {
+							print(">\n");
+						}
 					}
 				print("</DIV>\n");
 
@@ -859,6 +892,7 @@ function processEditPlaylist($db, $data, $playlistID, $userID) {
 	$newName = $data["pname"];
 	$is_public = $data["access"];
 	$delete = $data["cbDelPlaylist"];
+	$currated = $data["cbRecommend"];
 
 	// if deleting playlist
 	if ($delete == "T") {
@@ -907,6 +941,19 @@ function processEditPlaylist($db, $data, $playlistID, $userID) {
 		}
 	}
 
+	// if adding to currated playlists
+	if ($currated == "T") {
+		$recommendQuery = "INSERT INTO currated VALUE($playlistID)";
+		$recommendResult = $db->query($recommendQuery);
+	}
+	else {
+		$recommendQuery = "DELETE FROM currated WHERE pid=$playlistID";
+		$recommendResult = $db->query($recommendQuery);
+	}
+
+
+
+
 	// if deleting playlist or creating new, go to overall playlist page
 	if ($delete == "T" || $playlistID == -1) {
 		viewPlaylistsPage($db, $userID);
@@ -939,29 +986,43 @@ function addToPlaylist($db, $data, $userID) {
 }
 
 // view the main homepage of the site. 
-// for some reason this shifts the control bar over slightly.
 function viewHomepage($db, $userID) {
 	print("<DIV class='container contentContainer'>\n");
 		print("<DIV class='row headerRow'>\n");
 		print("<p>Welcome back, <b>$userID.</b></p>\n");
 		print("</DIV>\n");
 
-		// fetch albums for "continue listening"
-		// TODO make this actually pull from recent listening
-
 		$albumQuery = "SELECT aid FROM album";
 		$albumResult = $db->query($albumQuery);
-		$maxIndex = 10 > count($albumResult) ? count($albumResult) : 10;
 
 		print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
-		print("<p>Continue listening</p>\n");
+		print("<p>Sample our Catalog</p>\n");
 		print("</DIV>\n");
 		print("<DIV class='row'>\n");
 			print("<DIV class='scrollable-container'>\n");
 			print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
-			for($i = 0; $i < $maxIndex; $i++) {
-				$currAlbumID = $albumResult->fetch()["aid"];
+			$i = 0;
+			while(($currAlbumID = $albumResult->fetch()["aid"]) && $i < 10) {
 				showAlbumTile($db, $currAlbumID, TRUE);
+				$i++;
+			}
+			print("</DIV>\n");
+			print("</DIV>\n");
+		print("</DIV>\n");
+
+		$curratedQuery = "SELECT pid FROM currated";
+		$curratedResult = $db->query($curratedQuery);
+
+		print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
+		print("<p>Currated by Genre</p>\n");
+		print("</DIV>\n");
+		print("<DIV class='row'>\n");
+			print("<DIV class='scrollable-container'>\n");
+			print("<DIV class='scrollable-content' style='margin-top: 20px'>\n");
+			$i = 0;
+			while(($currPlaylistID = $curratedResult->fetch()["pid"]) && $i < 10) {
+				showPlaylistTile($db, $currPlaylistID, FALSE);
+				$i++;
 			}
 			print("</DIV>\n");
 			print("</DIV>\n");
@@ -1189,6 +1250,55 @@ function viewResults($db, $data) {
 	print("</DIV>\n");
 }	
 
+// view the MyAccount page, where one can logout.
+function viewAccountPage($db, $userID) {
+	print("<DIV class='container-fluid contentContainer'>\n");
+	print("<DIV class='row headerRow d_flex align-items-center'>\n");
+			print("<p>$userID's account</p>&emsp;\n");
+			print("<A href='?op=logout'>"
+						."<DIV class='otherMenu d-flex justify-content-center'>"
+						."Sign Out</DIV></A>");
+		print("</DIV>\n");
+
+		print("<DIV class='row textRow' style='margin-top: 50px'>\n");
+		print("<p>Change Password</p>");
+		print("</DIV>\n");
+			print("<DIV class='row'>\n");
+				print("<FORM name = 'fmChangePass' method='POST' action='?op=changepass'>\n");
+				print("<INPUT class='loginTextBox' type='password' name='oldpass' size='16' placeholder='old password' />\n");
+				print("<br>");
+				print("<INPUT class='loginTextBox' type='password' name='pass1' size='16' placeholder='password' />\n");
+				print("<br>");
+				print("<INPUT class='loginTextBox' type='password' name='pass2' size='16' placeholder='re-enter' />\n");
+				print("<br>");
+			 	print("<INPUT type='submit' class='otherMenu' value='Update' style='margin-top: 20px; width: 100%'/>\n");
+				print("</FORM>\n");
+			print("</DIV>\n");
+	print("</DIV>\n");
+}
+
+function processChangePassword($db, $userID, $data) {
+	$oldpass = $data["oldpass"];
+	$pass1 = $data["pass1"];
+	$pass2 = $data["pass2"];
+
+	$valid = validateUser($db, $userID, $oldpass);
+	if ($pass1 != $pass2) {
+		header("refresh:2;url=dashboard.php?op=account");
+		printf("Passwords do not match.");
+	}
+	else if ($valid == FALSE) {
+		header("refresh:2;url=dashboard.php?op=account");
+		printf("<DIV class='textRow'>incorrect password.</DIV>");
+	}
+	else {
+		$passEncrypted = md5($pass1);
+		$updatePassQuery = "UPDATE users SET pass='$passEncrypted' WHERE uname='$userID'";
+		$updatePassResult = $db->query($updatePassQuery);
+		header("refresh:2;url=dashboard.php?op=home");
+		printf("Successfully updated password!");
+	}
+}
 
 // display an error page when going to an unknown artist, album, or playlist.
 function show404($errorSource) {

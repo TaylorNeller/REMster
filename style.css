@@ -42,6 +42,15 @@
 	background-color: #43485B;
 }
 
+.otherMenu {
+	font-family: "Gill Sans", sans-serif;
+	font-size: 24px;
+	color: #E8E9EC;
+	border-radius: 5px;
+	width: 150%;
+	background-color: #43485B;
+}
+
 .headerRow {
 	color: #E8E9EC;
 	font-family: "Gill Sans", sans-serif;
