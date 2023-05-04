@@ -841,7 +841,7 @@ function viewEditPlaylistPage($db, $userID, $playlistID) {
 					}
 					// if user is admin, allow adding to currated playlists
 					if ($isAdmin == TRUE) {
-						print("<p>Add to currated?&emsp;</p>");
+						print("<p>Add to curated?&emsp;</p>");
 						print("<INPUT name='cbRecommend' type='checkbox' value='T' ");
 						// if currently in currated, check box by default
 						if ($isCurrated == TRUE) {
