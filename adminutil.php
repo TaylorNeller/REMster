@@ -4,12 +4,15 @@ ini_set('upload_max_filesize', '100M');
 ini_set('post_max_size', '100M');
 
 function isAdmin($db, $user) {
-	$query = "SELECT * FROM admins WHERE uname='$user'";
-	$res = $db->query($query);
-	if ($res != FALSE) {
-		$row = $res->fetch();
-		return $row["uname"] == $user;
+	if ($user != "") {
+		$query = "SELECT * FROM admins WHERE uname='$user'";
+		$res = $db->query($query);
+		if ($res != FALSE) {
+			$row = $res->fetch();
+			return $row["uname"] == $user;
+		}
 	}
+
 	return FALSE;
 }
 function viewUploadArtist($db, $user) {
