@@ -62,8 +62,7 @@ function showSongsList($db, $songsData, $mediaID, $mediaType, $userID) {
 		$jsArtists = implode(', ', $currArtist);
 		$jsData = $currSid . ", " . $currAid . ', ' . $currName. ', ' . $currDuration. ', ' . $otherSongs . ', ' . $jsArtists;
 
-		print("<TD><BUTTON type='button' class='tnum' value='$jsData' onclick='loadNewData(this.value)'>" . 
-			"$trackNum</DIV></TD>\n");
+		print("<TD><BUTTON value='$jsData' onclick='loadNewData(this.value)' class='trackButton'/>$trackNum</TD>\n");
 
 
 		$artistString = "";
