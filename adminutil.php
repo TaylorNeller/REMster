@@ -12,6 +12,24 @@ function isAdmin($db, $user) {
 	}
 	return FALSE;
 }
+function viewUploadArtist($db, $user) {
+	if (isAdmin($db,$user)) {
+		?>
+			<div id="form-container">
+				<form enctype="multipart/form-data" name="upload-artist" method="POST" action="?op=uploadArt">
+					<h1 class="fm-text">Artist Upload</h1>
+					<p class="song-p">Name</p>
+    				<input name="aname" class="fm-input" type="text" required/>
+    
+    				<p class="song-p">Upload Profile Picture:</p>
+    				<input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
+    				<input name="ppic" type="file" required>
+  					</br><input id="upload-btn" class="btn" type="submit" value="Create Artist Profile"/>
+				</form>
+			</div>
+		<?php
+	}
+}
 
 function viewUploadForm($db, $user) {
 	if (isAdmin($db,$user)) {
@@ -28,20 +46,6 @@ function viewUploadForm($db, $user) {
 					<div id="song-container">
 						
 						<script>addSongForm()</script>
-
-						<!-- <div id="first-add-song" class="add-song">
-							<p class="song-p">Name</p>
-							<input name="sname[0]" class="fm-input" type="text" required/>
-							<p class="song-p">Genre</p>
-							<input name="sgenre[0]" class="fm-input" type="text" required/>		
-							<p class="song-p">Duration</p>
-							<input name="sdur[0]" class="fm-input" type="text" required/>
-							<p class="song-p">Artists</p>
-							<input name="sarts[0]" class="fm-input" type="text required"/>					
-							<p class="song-p">Upload MP3:</p>
-							<input type="hidden" name="MAX_FILE_SIZE" value="30000" />
-  							<input name="smp3[0]"type="file" required>
-						</div> -->
 						</br>
 					</div>
 					<button id="add-song" name="add-song" type='button' class="btn song-control" onclick="addSongForm()">Add Song</button>
@@ -58,6 +62,27 @@ function viewUploadForm($db, $user) {
 				</form>
 			</div>
 		<?php
+	}
+}
+
+function processArtistUpload($db, $user, $formData) {
+	$aname = $formData['aname'];
+
+	$query = "INSERT INTO artist(artname) VALUE('$aname')";
+	$res = $db->query($query);
+	$aid = $db->lastInsertId();
+
+	// upload cover art
+	$image_dir = "art/profile/";
+	$uploadfile = $image_dir . $aid . ".png";
+
+	print("<p>");
+	if (move_uploaded_file($_FILES['ppic']['tmp_name'], $uploadfile)) {
+		echo "Uploaded successfully!.\n";
+	} else {
+		echo "Error in image upload!\n";
+		echo 'Here is some more debugging info:';
+		print_r($_FILES);
 	}
 }
 
@@ -85,14 +110,8 @@ function processAlbumUpload($db, $user, $formData) {
 		}
 		array_push($genreArr, $songGenres);
 	}
-	// foreach ($genres as $n) {
-	// 	print("<p>$n</p>");
-	// }
 
 	$durs = $formData["sdur"];
-	// foreach ($durs as $n) {
-	// 	print("<p>$n</p>");
-	// }
 
 	$arts = $formData["sarts"];
 	$artsArr = [];
@@ -108,6 +127,26 @@ function processAlbumUpload($db, $user, $formData) {
 			}
 		}
 		array_push($artsArr, $songArts);
+	}
+
+	// retrieves artist ids
+
+	$artistIds = [];
+
+	foreach ($artsSet as $artist) {
+		$sQuery = "SELECT * FROM artist WHERE UPPER(artname)=UPPER('$artist')";
+		$res = $db->query($sQuery);
+		$row = $res->fetch();
+		if ($row == FALSE) {
+			header("refresh:2;url=dashboard.php?op=uploadfmArt");
+			printf("Please create all artists in album before uploading");
+			return;
+		}
+		else {
+			$id = $row["artid"];
+			array_push($artistIds, $id);
+		}
+
 	}
 
 	$rdate = $formData['rdate'];
@@ -175,19 +214,7 @@ function processAlbumUpload($db, $user, $formData) {
 	
 	}
 
-	// retrieves artist ids
 
-	$artistIds = [];
-
-	foreach ($artsSet as $artist) {
-		$sQuery = "SELECT * FROM artist WHERE artname='$artist'";
-		$res = $db->query($sQuery);
-		if ($res == FALSE) {
-			print("<h1>ERROR RETRIEVING 'artid'</h1>");
-		}
-		$id = $res->fetch()["artid"];
-		array_push($artistIds, $id);
-	}
 
 	// updates 'album_artist'
 
@@ -224,13 +251,19 @@ function processAlbumUpload($db, $user, $formData) {
 	$genreIds = [];
 
 	foreach ($genreSet as $genre) {
-		$sQuery = "SELECT * FROM genre WHERE gname='$genre'";
+		$sQuery = "SELECT * FROM genre WHERE UPPER(gname)=UPPER('$genre')";
 		$res = $db->query($sQuery);
-		if ($res == FALSE) {
-			print("<h1>ERROR RETRIEVING 'gname'</h1>");
+		$row = $res->fetch();
+		if ($row == FALSE) {
+			$addQuery = "INSERT INTO genre(gname) VALUE('$genre')";
+			$res = $db->query($addQuery);
+			$id = $db->lastInsertId();
+			array_push($genreIds, $id);
 		}
-		$id = $res->fetch()["gid"];
-		array_push($genreIds, $id);
+		else {
+			$id = $row["gid"];
+			array_push($genreIds, $id);
+		}
 	}
 
 	// updates 'album_genre'

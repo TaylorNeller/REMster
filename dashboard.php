@@ -79,6 +79,11 @@ switch($op) {
 		</DIV></A>
 		<?php
 			if (isAdmin($db, $_SESSION["uname"])) {
+				print("<A href='?op=uploadfmArt'>"
+						."<DIV class='row sideMenu' style='white-space: nowrap'>"
+						."Create Artist</DIV></A>");
+			}
+			if (isAdmin($db, $_SESSION["uname"])) {
 				print("<A href='?op=uploadfm'>"
 						."<DIV class='row sideMenu' style='white-space: nowrap'>"
 						."Upload Album</DIV></A>");
@@ -165,8 +170,14 @@ switch($op) {
 				case "uploadfm":
 					viewUploadForm($db, $userID);
 					break;
+				case "uploadfmArt":
+					viewUploadArtist($db, $userID);
+					break;
 				case "upload":
 					processAlbumUpload($db, $userID, $_POST);
+					break;
+				case "uploadArt":
+					processArtistUpload($db, $userID, $_POST);
 					break;
 				case "removefm":
 					viewRemoveForm($db, $userID);

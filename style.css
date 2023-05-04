@@ -284,8 +284,10 @@ hr.solid {
 
 
 #outer-row {
-	min-height: 100%;
+	/* min-height: 100%; */
 	color:#E8E9EC;
+	max-height: 90%;
+	overflow-y: auto;
 }
 
 #remove-table, #remove-table th, #remove-table td {
