@@ -28,5 +28,6 @@ testadmin	adminpass	(admin account)
 harry		password	(took slides screenshots from this acc)
 
 
-
-
+Links to website (both hosting locations):
+http://cs.gettysburg.edu/~nellta01/cs360/REMster/dashboard.php
+http://cs.gettysburg.edu/~moorha01/cs360/REMster/dashboard.php
