@@ -1013,7 +1013,7 @@ function viewHomepage($db, $userID) {
 		$curratedResult = $db->query($curratedQuery);
 
 		print("<DIV class='row f_headerText' style='margin-top:20px'>\n");
-		print("<p>Currated by Genre</p>\n");
+		print("<p>Curated by Genre</p>\n");
 		print("</DIV>\n");
 		print("<DIV class='row'>\n");
 			print("<DIV class='scrollable-container'>\n");
