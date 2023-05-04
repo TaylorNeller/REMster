@@ -1328,6 +1328,7 @@ function viewAccountPage($db, $userID) {
 			print("<p>If checked, user is an admin account and has access to upload/deletion privledges.</p>");
 			print("</DIV>\n");
 		print("</DIV>\n");
+		print("<DIV style='height: 200px; margin-top: 20px'></DIV>\n");
 	print("</DIV>\n");
 }
 
