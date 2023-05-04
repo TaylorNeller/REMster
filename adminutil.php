@@ -26,6 +26,7 @@ function viewUploadArtist($db, $user) {
     				<input name="ppic" type="file" required>
   					</br><input id="upload-btn" class="btn" type="submit" value="Create Artist Profile"/>
 				</form>
+				<DIV style='height: 200px; margin-top: 20px'></DIV>
 			</div>
 		<?php
 	}
@@ -60,7 +61,9 @@ function viewUploadForm($db, $user) {
 
   					</br><input id="upload-btn" class="btn" type="submit" value="Upload Album"/>
 				</form>
+				<DIV style='height: 200px; margin-top: 20px'></DIV>
 			</div>
+			
 		<?php
 	}
 }
