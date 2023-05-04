@@ -1026,6 +1026,8 @@ function viewHomepage($db, $userID) {
 			print("</DIV>\n");
 			print("</DIV>\n");
 		print("</DIV>\n");
+		print("<DIV style='height: 200px; margin-top: 20px'></DIV>");
+
 	print("</DIV>\n");
 }
 
