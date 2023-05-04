@@ -209,7 +209,7 @@ function viewPlaylist($db, $playlistID, $userID) {
 		$likedPid = $row["pid"];
 	}
 
-	$curratedQuery = "SELECT pid FROM currated";
+	$curratedQuery = "SELECT pid FROM currated WHERE pid=$playlistID";
 	$curratedResult = $db->query($curratedQuery);
 	$isCurrated = FALSE;
 	if ($curratedResult->fetch()["pid"] != "") {
@@ -244,7 +244,7 @@ function viewPlaylist($db, $playlistID, $userID) {
 
 				print("<DIV class='row textRow'>\n");
 				if ($isCurrated == TRUE) {
-					print("CURRATED PLAYLIST");
+					print("CURATED PLAYLIST");
 				}
 				else if ($playlistData["is_public"] == "T") {
 					print("PUBLIC PLAYLIST");
